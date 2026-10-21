@@ -33,13 +33,16 @@ def document_key(project_id: uuid.UUID, document_id: uuid.UUID) -> str:
     return f"projects/{project_id}/documents/{document_id}"
 
 
-async def process_inbound(db: AsyncSession, storage: Storage, inbound_id: uuid.UUID) -> None:
+async def process_inbound(
+    db: AsyncSession, storage: Storage, inbound_id: uuid.UUID
+) -> uuid.UUID | None:
+    """Returns the id of the new message, if one was created."""
     inbound = await db.get(InboundEmail, inbound_id)
     if inbound is None or inbound.status not in (InboundStatus.received, InboundStatus.failed):
-        return
+        return None
     try:
         payload = json.loads(await storage.get(inbound.raw_key))
-        await _process(db, storage, inbound, parse_postmark(payload))
+        return await _process(db, storage, inbound, parse_postmark(payload))
     except Exception as exc:  # noqa: BLE001 - keep the delivery and record why it failed
         await db.rollback()
         inbound = await db.get(InboundEmail, inbound_id)
@@ -48,17 +51,18 @@ async def process_inbound(db: AsyncSession, storage: Storage, inbound_id: uuid.U
             inbound.error = f"{type(exc).__name__}: {exc}"[:2000]
             await db.commit()
         log.exception("inbound email %s failed", inbound_id)
+        return None
 
 
 async def _process(
     db: AsyncSession, storage: Storage, inbound: InboundEmail, email: ParsedEmail
-) -> None:
+) -> uuid.UUID | None:
     project = await _find_project(db, email.recipients)
     inbound.processed_at = datetime.now(UTC)
     if project is None:
         inbound.status = InboundStatus.unroutable
         await db.commit()
-        return
+        return None
     inbound.project_id = project.id
 
     duplicate = await db.scalar(
@@ -69,7 +73,7 @@ async def _process(
     if duplicate:
         inbound.status = InboundStatus.duplicate
         await db.commit()
-        return
+        return None
 
     thread = await _find_thread(db, project.id, email)
     if thread is None:
@@ -131,6 +135,7 @@ async def _process(
     inbound.status = InboundStatus.processed
     inbound.error = None
     await db.commit()
+    return message.id
 
 
 def _is_decoration(attachment: ParsedAttachment) -> bool:

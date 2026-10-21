@@ -326,10 +326,89 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Suggestions
+         * @description Filing proposals waiting for approval, newest first.
+         */
+        get: operations["suggestions_list_suggestions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/suggestions/{suggestion_id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept Suggestion
+         * @description Files as suggested (or under the requirement the person chose) and applies the status.
+         */
+        post: operations["suggestions_accept_suggestion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/suggestions/{suggestion_id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dismiss Suggestion */
+        post: operations["suggestions_dismiss_suggestion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AcceptResult */
+        AcceptResult: {
+            /**
+             * Requirement Id
+             * Format: uuid
+             */
+            requirement_id: string;
+            /** Status Applied */
+            status_applied: boolean;
+            /** Status Error */
+            status_error: string | null;
+        };
+        /** AcceptSuggestion */
+        AcceptSuggestion: {
+            /** Requirement Id */
+            requirement_id?: string | null;
+            /**
+             * Apply Status
+             * @default true
+             */
+            apply_status: boolean;
+        };
         /**
          * AuthorityType
          * @enum {string}
@@ -419,6 +498,8 @@ export interface components {
             unread: number;
             /** Unfiled */
             unfiled: number;
+            /** Pending Suggestions */
+            pending_suggestions: number;
         };
         /** LoginIn */
         LoginIn: {
@@ -457,6 +538,11 @@ export interface components {
          * @enum {string}
          */
         MessageDirection: "inbound" | "outbound";
+        /**
+         * MessageKind
+         * @enum {string}
+         */
+        MessageKind: "approval" | "rejection" | "request_for_info" | "info" | "other";
         /** MessageOut */
         MessageOut: {
             /**
@@ -750,6 +836,49 @@ export interface components {
         /** StatusUpdate */
         StatusUpdate: {
             status: components["schemas"]["RequirementStatus"];
+        };
+        /** SuggestionOut */
+        SuggestionOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Target
+             * @enum {string}
+             */
+            target: "thread" | "document";
+            /** Thread Id */
+            thread_id: string | null;
+            /** Document Id */
+            document_id: string | null;
+            /** Title */
+            title: string;
+            /** Sender */
+            sender: string | null;
+            /** File Count */
+            file_count: number;
+            /** Requirement Id */
+            requirement_id: string | null;
+            /** Requirement Title */
+            requirement_title: string | null;
+            requirement_status: components["schemas"]["RequirementStatus"] | null;
+            kind: components["schemas"]["MessageKind"];
+            suggested_status: components["schemas"]["RequirementStatus"] | null;
+            /** Summary */
+            summary: string;
+            /** Reason */
+            reason: string;
+            /** Confidence */
+            confidence: number;
+            /** Source */
+            source: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** TemplateOut */
         TemplateOut: {
@@ -1565,6 +1694,103 @@ export interface operations {
             path: {
                 project_id: string;
                 thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    suggestions_list_suggestions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestionOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    suggestions_accept_suggestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                suggestion_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptSuggestion"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    suggestions_dismiss_suggestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                suggestion_id: string;
             };
             cookie?: never;
         };

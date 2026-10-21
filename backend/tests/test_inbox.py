@@ -90,7 +90,7 @@ async def test_email_lands_in_project_inbox_with_attachment(client: AsyncClient)
         1,  # the inline signature logo is not a document
     )
     detail = (await client.get(f"/api/v1/projects/{project['id']}", headers=auth(token))).json()
-    assert detail["inbox"] == {"unread": 1, "unfiled": 1}
+    assert detail["inbox"] == {"unread": 1, "unfiled": 1, "pending_suggestions": 1}
 
     full = (
         await client.get(

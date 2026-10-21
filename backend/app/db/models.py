@@ -15,11 +15,13 @@ from app.core.enums import (
     DocumentStatus,
     InboundStatus,
     MessageDirection,
+    MessageKind,
     OrgRole,
     ProjectRole,
     ProjectStatus,
     Repeat,
     RequirementStatus,
+    SuggestionStatus,
 )
 from app.db.base import Base, IdMixin, TimestampMixin
 
@@ -319,6 +321,42 @@ class InboundEmail(IdMixin, Base):
         sa.DateTime(timezone=True), server_default=sa.func.now()
     )
     processed_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+
+
+class Suggestion(IdMixin, TimestampMixin, Base):
+    """Arba's proposal for filing a thread or document, waiting for a person to approve it."""
+
+    __tablename__ = "suggestions"
+
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
+    # Exactly one of thread_id / document_id is set.
+    thread_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("threads.id", ondelete="CASCADE"), index=True
+    )
+    document_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("documents.id", ondelete="CASCADE"), index=True
+    )
+    message_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("messages.id", ondelete="SET NULL")
+    )
+    requirement_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("requirements.id", ondelete="SET NULL")
+    )
+    kind: Mapped[MessageKind]
+    suggested_status: Mapped[RequirementStatus | None]
+    summary: Mapped[str] = mapped_column(sa.Text)
+    reason: Mapped[str] = mapped_column(sa.Text)
+    confidence: Mapped[float]
+    source: Mapped[str] = mapped_column(sa.String(16))
+    model: Mapped[str | None] = mapped_column(sa.String(64))
+    input_tokens: Mapped[int | None]
+    output_tokens: Mapped[int | None]
+    status: Mapped[SuggestionStatus] = mapped_column(default=SuggestionStatus.pending, index=True)
+    decided_by: Mapped[uuid.UUID | None] = mapped_column(sa.ForeignKey("users.id"))
+    decided_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+    applied_requirement_id: Mapped[uuid.UUID | None]
 
 
 # --- Audit ----------------------------------------------------------------------------

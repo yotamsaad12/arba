@@ -17,6 +17,8 @@ export type ThreadSummary = Schemas["ThreadSummary"];
 export type ThreadDetail = Schemas["ThreadDetail"];
 export type MessageOut = Schemas["MessageOut"];
 export type DocumentOut = Schemas["DocumentOut"];
+export type Suggestion = Schemas["SuggestionOut"];
+export type AcceptResult = Schemas["AcceptResult"];
 
 export interface ApiOptions {
   /** Empty for the web app, which reaches the API through the dev proxy / same origin. */

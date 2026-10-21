@@ -82,6 +82,8 @@ class InboxCounts(BaseModel):
     unread: int
     # Conversations not filed under a requirement yet.
     unfiled: int
+    # Filing proposals waiting for a person's approval (mail and documents).
+    pending_suggestions: int
 
 
 class ProjectDetail(ProjectOut):

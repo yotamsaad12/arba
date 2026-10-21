@@ -43,6 +43,8 @@ export function useUploads(projectId: string) {
         }),
       );
       await invalidateProjects();
+      // Arba files unfiled uploads in the background; pick up its suggestion when ready.
+      if (uploaded && !requirementId) window.setTimeout(() => void invalidateProjects(), 1500);
       if (uploaded) celebrate.toast(t("documents.uploadedToast", { count: uploaded }), "📎");
     },
     [projectId, message, celebrate, t],

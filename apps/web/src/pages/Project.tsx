@@ -11,6 +11,7 @@ import { useErrorMessage } from "../lib/useErrorMessage";
 import { DocumentsView } from "../project/DocumentsView";
 import { InboxView } from "../project/InboxView";
 import { RequirementCard } from "../project/RequirementCard";
+import { ApprovalsPanel } from "../project/SuggestionCard";
 import { STAGE_ICON, isStageKey, sceneModel } from "../scene/model";
 import { useFocusLabel } from "../scene/useFocusLabel";
 import { LiveWorld } from "../world/LiveWorld";
@@ -37,6 +38,10 @@ export function ProjectPage() {
   const project = $api.useQuery("get", "/api/v1/projects/{project_id}", path);
   const requirements = $api.useQuery("get", "/api/v1/projects/{project_id}/requirements", path);
   const steps = $api.useQuery("get", "/api/v1/projects/{project_id}/next-steps", path);
+  // New mail and uploads are classified in the background; keep the approvals fresh.
+  const suggestions = $api.useQuery("get", "/api/v1/projects/{project_id}/suggestions", path, {
+    refetchInterval: 15_000,
+  });
   const titles = useMemo(
     () => new Map(requirements.data?.requirements.map((r) => [r.id, r.title])),
     [requirements.data],
@@ -67,7 +72,8 @@ export function ProjectPage() {
       <LayoutGroup id="tabs">
         <nav className="relative grid grid-cols-4 rounded-full border-2 border-ink bg-surface p-1" role="tablist">
           {TABS.map((key) => {
-            const badge = key === "inbox" ? p.inbox.unread : 0;
+            const badge =
+              key === "inbox" ? p.inbox.unread : key === "now" ? (suggestions.data?.length ?? 0) : 0;
             return (
               <button
                 key={key}
@@ -115,12 +121,24 @@ export function ProjectPage() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
         >
-          {tab === "now" &&
-            (steps.data ? (
-              <NextStepsView projectId={projectId} steps={steps.data} titles={titles} canEdit={canEdit} />
-            ) : (
-              <Spinner label={t("app.loading")} />
-            ))}
+          {tab === "now" && (
+            <div className="space-y-8">
+              {requirements.data && (
+                <ApprovalsPanel
+                  projectId={projectId}
+                  suggestions={suggestions.data ?? []}
+                  stages={requirements.data.stages}
+                  requirements={requirements.data.requirements}
+                  canEdit={canEdit}
+                />
+              )}
+              {steps.data ? (
+                <NextStepsView projectId={projectId} steps={steps.data} titles={titles} canEdit={canEdit} />
+              ) : (
+                <Spinner label={t("app.loading")} />
+              )}
+            </div>
+          )}
           {tab !== "now" && !requirements.data && <Spinner label={t("app.loading")} />}
           {tab === "all" && requirements.data && (
             <AllRequirementsView
@@ -134,6 +152,7 @@ export function ProjectPage() {
           {tab === "inbox" && requirements.data && (
             <InboxView
               projectId={projectId}
+              suggestions={suggestions.data ?? []}
               inboxAddress={p.inbox_address}
               canEdit={canEdit}
               stages={requirements.data.stages}
@@ -143,6 +162,7 @@ export function ProjectPage() {
           {tab === "documents" && requirements.data && (
             <DocumentsView
               projectId={projectId}
+              suggestions={suggestions.data ?? []}
               projectName={p.name}
               canEdit={canEdit}
               stages={requirements.data.stages}

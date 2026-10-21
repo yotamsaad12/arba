@@ -1,4 +1,4 @@
-import type { DocumentOut, Requirement, Stage } from "@arba/api-client";
+import type { DocumentOut, Requirement, Stage, Suggestion } from "@arba/api-client";
 import { AnimatePresence, motion } from "motion/react";
 import { useMemo, useRef, useState, type DragEvent } from "react";
 import { useTranslation } from "react-i18next";
@@ -8,17 +8,26 @@ import { $api, api, invalidateProjects } from "../lib/api";
 import { UPLOAD_ACCEPT, fileIcon, formatBytes, formatDateTime } from "../lib/upload";
 import { useErrorMessage } from "../lib/useErrorMessage";
 import { RequirementPicker } from "./RequirementPicker";
+import { SuggestionCard } from "./SuggestionCard";
 import { useUploads, type UploadItem } from "./useUploads";
 
 interface Props {
   projectId: string;
+  suggestions: Suggestion[];
   projectName: string;
   canEdit: boolean;
   stages: Stage[];
   requirements: Requirement[];
 }
 
-export function DocumentsView({ projectId, projectName, canEdit, stages, requirements }: Props) {
+export function DocumentsView({
+  projectId,
+  suggestions,
+  projectName,
+  canEdit,
+  stages,
+  requirements,
+}: Props) {
   const { t } = useTranslation();
   const message = useErrorMessage();
   const documents = $api.useQuery("get", "/api/v1/projects/{project_id}/documents", {
@@ -73,9 +82,29 @@ export function DocumentsView({ projectId, projectName, canEdit, stages, require
             </div>
             <ul className="space-y-2">
               <AnimatePresence mode="popLayout">
-                {grouped.unfiled.map((d) => (
-                  <DocumentRow key={d.id} document={d} {...rowProps} highlight />
-                ))}
+                {grouped.unfiled.map((d) => {
+                  const suggestion = suggestions.find((s) => s.document_id === d.id);
+                  return suggestion ? (
+                    <motion.li key={d.id} layout exit={{ opacity: 0, x: 40 }} className="space-y-2">
+                      <div className="flex items-center gap-2 px-1 text-sm font-medium">
+                        <span>{fileIcon(d.file_name, d.content_type)}</span>
+                        <a href={d.download_url} className="truncate hover:underline">
+                          {d.file_name}
+                        </a>
+                      </div>
+                      <SuggestionCard
+                        projectId={projectId}
+                        suggestion={suggestion}
+                        stages={stages}
+                        requirements={requirements}
+                        canEdit={canEdit}
+                        compact
+                      />
+                    </motion.li>
+                  ) : (
+                    <DocumentRow key={d.id} document={d} {...rowProps} highlight />
+                  );
+                })}
               </AnimatePresence>
             </ul>
           </motion.section>
@@ -119,7 +148,7 @@ function DocumentRow({
 }: {
   document: DocumentOut;
   highlight?: boolean;
-} & Omit<Props, "projectName">) {
+} & Omit<Props, "projectName" | "suggestions">) {
   const { t } = useTranslation();
   const message = useErrorMessage();
   const celebrate = useCelebrate();

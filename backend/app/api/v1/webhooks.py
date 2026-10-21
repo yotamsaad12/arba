@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import secrets
 import uuid
 from typing import Annotated
@@ -16,7 +17,9 @@ from app.core.storage import get_storage
 from app.db.models import InboundEmail
 from app.db.session import SessionLocal
 from app.email.processing import process_inbound, raw_key
+from app.modules.suggestions.service import get_classifier, suggest_for_message
 
+log = logging.getLogger(__name__)
 router = APIRouter(prefix="/webhooks", tags=["webhooks"], include_in_schema=False)
 _basic = HTTPBasic(auto_error=False)
 
@@ -78,5 +81,13 @@ async def postmark_inbound(
 
 
 async def _process(inbound_id: uuid.UUID) -> None:
+    storage = get_storage()
     async with SessionLocal() as db:
-        await process_inbound(db, get_storage(), inbound_id)
+        message_id = await process_inbound(db, storage, inbound_id)
+        if message_id is None:
+            return
+        # A missing suggestion only means the person files by hand; never lose the email over it.
+        try:
+            await suggest_for_message(db, storage, get_classifier(), message_id)
+        except Exception:
+            log.exception("could not suggest filing for message %s", message_id)

@@ -16,6 +16,7 @@ from app.db.models import AuditLog, Document, Project, Requirement, User
 from app.email.processing import document_key
 from app.modules.documents.schemas import DocumentOut, UploadRequest
 from app.modules.projects.schemas import stages_of
+from app.modules.suggestions.resolve import resolve_pending
 
 # What people upload to a building file: scans, photos, office documents and drawings.
 ALLOWED_EXTENSIONS = frozenset(
@@ -119,6 +120,7 @@ async def file_document(
     document = await get_document(db, project, document_id)
     await ensure_requirement(db, project, requirement_id)
     document.requirement_id = requirement_id
+    await resolve_pending(db, user, requirement_id, document_id=document.id)
     db.add(_audit(project, user, "document.filed", document, requirement=requirement_id))
     await db.commit()
     return document

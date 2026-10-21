@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     upload_url_minutes: int = 15
     max_upload_mb: int = 25
 
+    # Filing suggestions. "auto" uses Claude when ANTHROPIC_API_KEY is set, else the rules engine.
+    ai_provider: Literal["auto", "claude", "rules"] = "auto"
+    ai_model: str = "claude-opus-5-5"
+    ai_effort: Literal["low", "medium", "high"] = "low"
+
     # The mail provider calls the inbound webhook with these HTTP Basic credentials.
     inbound_webhook_user: str = "postmark"
     inbound_webhook_password: str = DEV_WEBHOOK_PASSWORD

@@ -34,6 +34,16 @@ make test-email TO=p-xxxxxxxx@in.arba.co.il ARGS="--reply --attach plan.pdf"
 
 Uploaded and received files are stored under `backend/.storage/` in development.
 
+### Filing suggestions (AI)
+
+Every incoming email and every unfiled upload gets a suggestion: which requirement it belongs
+to and what status to set. People approve it with one click or pick something else.
+
+- With `ANTHROPIC_API_KEY` set, suggestions come from Claude (`ARBA_AI_MODEL`, default
+  `claude-opus-5-5`, effort `ARBA_AI_EFFORT=low`). It reads attached PDFs and images.
+- Without a key, a built-in rules engine suggests from the sender, subject and file names.
+- `ARBA_AI_PROVIDER=rules|claude|auto` forces one or the other.
+
 ## Layout
 
 ```

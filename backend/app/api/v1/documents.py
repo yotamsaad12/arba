@@ -1,11 +1,13 @@
+import logging
 import uuid
 from urllib.parse import quote
 
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, BackgroundTasks, Response, status
 
 from app.core.deps import DB, CurrentUser
 from app.core.enums import ProjectRole
 from app.core.storage import get_storage
+from app.db.session import SessionLocal
 from app.modules.documents import service
 from app.modules.documents.schemas import (
     DocumentOut,
@@ -15,7 +17,9 @@ from app.modules.documents.schemas import (
     UploadTarget,
 )
 from app.modules.projects.service import get_project_for_user
+from app.modules.suggestions.service import get_classifier, suggest_for_document
 
+log = logging.getLogger(__name__)
 router = APIRouter(prefix="/projects/{project_id}/documents", tags=["documents"])
 
 
@@ -43,12 +47,26 @@ async def start_upload(
 
 @router.post("/{document_id}/complete")
 async def complete_upload(
-    project_id: uuid.UUID, document_id: uuid.UUID, db: DB, user: CurrentUser
+    project_id: uuid.UUID,
+    document_id: uuid.UUID,
+    db: DB,
+    user: CurrentUser,
+    background: BackgroundTasks,
 ) -> DocumentOut:
     project, _ = await get_project_for_user(db, project_id, user, ProjectRole.manager)
     storage = get_storage()
     document = await service.complete_upload(db, storage, project, user, document_id)
+    if document.requirement_id is None:
+        background.add_task(_suggest, document.id)
     return service.to_out(storage, document, user.name)
+
+
+async def _suggest(document_id: uuid.UUID) -> None:
+    async with SessionLocal() as db:
+        try:
+            await suggest_for_document(db, get_storage(), get_classifier(), document_id)
+        except Exception:
+            log.exception("could not suggest filing for document %s", document_id)
 
 
 @router.patch("/{document_id}")

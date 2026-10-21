@@ -100,3 +100,22 @@ class InboundStatus(StrEnum):
     unroutable = "unroutable"
     duplicate = "duplicate"
     failed = "failed"
+
+
+class MessageKind(StrEnum):
+    approval = "approval"
+    rejection = "rejection"
+    request_for_info = "request_for_info"
+    info = "info"
+    other = "other"
+
+
+class SuggestionStatus(StrEnum):
+    pending = "pending"
+    # Approved as suggested.
+    accepted = "accepted"
+    # Approved after the person picked a different requirement.
+    changed = "changed"
+    dismissed = "dismissed"
+    # A newer message in the same thread replaced it.
+    superseded = "superseded"

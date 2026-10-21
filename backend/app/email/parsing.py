@@ -62,8 +62,12 @@ _PREFIX = re.compile(
 )
 
 
+def strip_reply_prefixes(subject: str) -> str:
+    return re.sub(r"\s+", " ", _PREFIX.sub("", subject or "")).strip()
+
+
 def normalize_subject(subject: str) -> str:
-    return re.sub(r"\s+", " ", _PREFIX.sub("", subject or "")).strip().lower()
+    return strip_reply_prefixes(subject).lower()
 
 
 class _TextExtractor(HTMLParser):

@@ -4,13 +4,23 @@ from datetime import UTC, datetime
 from sqlalchemy import case, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.enums import DocumentSource, DocumentStatus
+from app.core.enums import DocumentSource, DocumentStatus, SuggestionStatus
 from app.core.errors import not_found
 from app.core.storage import Storage
-from app.db.models import AuditLog, Document, Message, Project, Requirement, Thread, User
+from app.db.models import (
+    AuditLog,
+    Document,
+    Message,
+    Project,
+    Requirement,
+    Suggestion,
+    Thread,
+    User,
+)
 from app.modules.documents import service as documents
 from app.modules.inbox.schemas import MessageOut, ThreadDetail, ThreadSummary
 from app.modules.projects.schemas import InboxCounts
+from app.modules.suggestions.resolve import resolve_pending
 
 SNIPPET_LENGTH = 140
 
@@ -175,6 +185,7 @@ async def file_thread(
         )
         .values(requirement_id=requirement_id)
     )
+    await resolve_pending(db, user, requirement_id, thread_id=thread.id)
     db.add(
         AuditLog(
             organization_id=project.organization_id,
@@ -201,4 +212,9 @@ async def counts(db: AsyncSession, project_id: uuid.UUID) -> InboxCounts:
         .select_from(Thread)
         .where(Thread.project_id == project_id, Thread.requirement_id.is_(None))
     )
-    return InboxCounts(unread=unread or 0, unfiled=unfiled or 0)
+    pending = await db.scalar(
+        select(func.count())
+        .select_from(Suggestion)
+        .where(Suggestion.project_id == project_id, Suggestion.status == SuggestionStatus.pending)
+    )
+    return InboxCounts(unread=unread or 0, unfiled=unfiled or 0, pending_suggestions=pending or 0)

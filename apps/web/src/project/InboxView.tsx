@@ -1,4 +1,4 @@
-import type { Requirement, Stage, ThreadSummary } from "@arba/api-client";
+import type { Requirement, Stage, Suggestion, ThreadSummary } from "@arba/api-client";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -9,9 +9,11 @@ import { $api, invalidateProjects } from "../lib/api";
 import { fileIcon, formatBytes, formatDateTime } from "../lib/upload";
 import { useErrorMessage } from "../lib/useErrorMessage";
 import { RequirementPicker } from "./RequirementPicker";
+import { SuggestionCard } from "./SuggestionCard";
 
 interface Props {
   projectId: string;
+  suggestions: Suggestion[];
   inboxAddress: string;
   canEdit: boolean;
   stages: Stage[];
@@ -50,6 +52,7 @@ export function InboxView(props: Props) {
             <ThreadRow
               key={thread.id}
               thread={thread}
+              suggested={props.suggestions.some((s) => s.thread_id === thread.id)}
               index={i}
               active={thread.id === selected}
               onSelect={() => select(thread.id)}
@@ -87,11 +90,13 @@ function avatarColor(email: string) {
 
 function ThreadRow({
   thread: th,
+  suggested,
   index,
   active,
   onSelect,
 }: {
   thread: ThreadSummary;
+  suggested: boolean;
   index: number;
   active: boolean;
   onSelect: () => void;
@@ -129,7 +134,11 @@ function ThreadRow({
           <span className={cx("block truncate text-sm", unread && "font-bold")}>{th.subject}</span>
           <span className="block truncate text-xs text-ink-soft">{th.snippet}</span>
           <span className="flex flex-wrap gap-1.5 pt-1 text-xs">
-            {th.requirement_title ? (
+            {suggested ? (
+              <span className="rounded-full bg-ink px-2 py-0.5 font-bold text-white">
+                ✨ {t("suggestions.approve")}?
+              </span>
+            ) : th.requirement_title ? (
               <span className="truncate rounded-full bg-success-soft px-2 py-0.5 font-medium text-success">
                 🗂️ {th.requirement_title}
               </span>
@@ -160,8 +169,10 @@ function ThreadPanel({
   canEdit,
   stages,
   requirements,
+  suggestions,
   onBack,
 }: Props & { threadId: string; onBack: () => void }) {
+  const suggestion = suggestions.find((s) => s.thread_id === threadId);
   const { t } = useTranslation();
   const message = useErrorMessage();
   const celebrate = useCelebrate();
@@ -210,6 +221,16 @@ function ThreadPanel({
         </p>
       </div>
 
+      {suggestion ? (
+        <SuggestionCard
+          projectId={projectId}
+          suggestion={suggestion}
+          stages={stages}
+          requirements={requirements}
+          canEdit={canEdit}
+          compact
+        />
+      ) : (
       <div
         className={cx(
           "flex flex-wrap items-center gap-2 rounded-xl p-3",
@@ -230,6 +251,7 @@ function ThreadPanel({
           <span className="text-sm">{th.requirement_title ?? t("inbox.unfiled")}</span>
         )}
       </div>
+      )}
       {file.error && <Alert>{message(file.error)}</Alert>}
 
       <ol className="space-y-3">

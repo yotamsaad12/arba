@@ -1128,10 +1128,237 @@
           }
         }
       }
+    },
+    "/api/v1/projects/{project_id}/suggestions": {
+      "get": {
+        "tags": [
+          "suggestions"
+        ],
+        "summary": "List Suggestions",
+        "description": "Filing proposals waiting for approval, newest first.",
+        "operationId": "suggestions_list_suggestions",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SuggestionOut"
+                  },
+                  "title": "Response Suggestions List Suggestions"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/suggestions/{suggestion_id}/accept": {
+      "post": {
+        "tags": [
+          "suggestions"
+        ],
+        "summary": "Accept Suggestion",
+        "description": "Files as suggested (or under the requirement the person chose) and applies the status.",
+        "operationId": "suggestions_accept_suggestion",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "suggestion_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Suggestion Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptSuggestion"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/suggestions/{suggestion_id}/dismiss": {
+      "post": {
+        "tags": [
+          "suggestions"
+        ],
+        "summary": "Dismiss Suggestion",
+        "operationId": "suggestions_dismiss_suggestion",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "suggestion_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Suggestion Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AcceptResult": {
+        "properties": {
+          "requirement_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Requirement Id"
+          },
+          "status_applied": {
+            "type": "boolean",
+            "title": "Status Applied"
+          },
+          "status_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "requirement_id",
+          "status_applied",
+          "status_error"
+        ],
+        "title": "AcceptResult"
+      },
+      "AcceptSuggestion": {
+        "properties": {
+          "requirement_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requirement Id"
+          },
+          "apply_status": {
+            "type": "boolean",
+            "title": "Apply Status",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "AcceptSuggestion"
+      },
       "AuthorityType": {
         "type": "string",
         "enum": [
@@ -1391,12 +1618,17 @@
           "unfiled": {
             "type": "integer",
             "title": "Unfiled"
+          },
+          "pending_suggestions": {
+            "type": "integer",
+            "title": "Pending Suggestions"
           }
         },
         "type": "object",
         "required": [
           "unread",
-          "unfiled"
+          "unfiled",
+          "pending_suggestions"
         ],
         "title": "InboxCounts"
       },
@@ -1479,6 +1711,17 @@
           "outbound"
         ],
         "title": "MessageDirection"
+      },
+      "MessageKind": {
+        "type": "string",
+        "enum": [
+          "approval",
+          "rejection",
+          "request_for_info",
+          "info",
+          "other"
+        ],
+        "title": "MessageKind"
       },
       "MessageOut": {
         "properties": {
@@ -2390,6 +2633,154 @@
           "status"
         ],
         "title": "StatusUpdate"
+      },
+      "SuggestionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "target": {
+            "type": "string",
+            "enum": [
+              "thread",
+              "document"
+            ],
+            "title": "Target"
+          },
+          "thread_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thread Id"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "sender": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sender"
+          },
+          "file_count": {
+            "type": "integer",
+            "title": "File Count"
+          },
+          "requirement_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requirement Id"
+          },
+          "requirement_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requirement Title"
+          },
+          "requirement_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RequirementStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "kind": {
+            "$ref": "#/components/schemas/MessageKind"
+          },
+          "suggested_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RequirementStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "target",
+          "thread_id",
+          "document_id",
+          "title",
+          "sender",
+          "file_count",
+          "requirement_id",
+          "requirement_title",
+          "requirement_status",
+          "kind",
+          "suggested_status",
+          "summary",
+          "reason",
+          "confidence",
+          "source",
+          "created_at"
+        ],
+        "title": "SuggestionOut"
       },
       "TemplateOut": {
         "properties": {
