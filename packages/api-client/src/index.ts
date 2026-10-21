@@ -13,6 +13,10 @@ export type Template = Schemas["TemplateOut"];
 export type Me = Schemas["MeOut"];
 export type TokenOut = Schemas["TokenOut"];
 export type BuildState = Schemas["BuildState"];
+export type ThreadSummary = Schemas["ThreadSummary"];
+export type ThreadDetail = Schemas["ThreadDetail"];
+export type MessageOut = Schemas["MessageOut"];
+export type DocumentOut = Schemas["DocumentOut"];
 
 export interface ApiOptions {
   /** Empty for the web app, which reaches the API through the dev proxy / same origin. */

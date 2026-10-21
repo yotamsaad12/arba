@@ -195,6 +195,137 @@ export interface paths {
         patch: operations["projects_update_requirement_status"];
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Documents */
+        get: operations["documents_list_documents"];
+        put?: never;
+        /**
+         * Start Upload
+         * @description Step 1 of 3: get a URL to PUT the file to. Then PUT it, then call /complete.
+         */
+        post: operations["documents_start_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/documents/{document_id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Complete Upload */
+        post: operations["documents_complete_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/documents/{document_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Document */
+        delete: operations["documents_delete_document"];
+        options?: never;
+        head?: never;
+        /** File Document */
+        patch: operations["documents_file_document"];
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/documents/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Documents
+         * @description The whole document folder as a ZIP, organised by stage and requirement.
+         */
+        get: operations["documents_export_documents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/inbox": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Threads */
+        get: operations["inbox_list_threads"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/threads/{thread_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Thread */
+        get: operations["inbox_get_thread"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * File Thread
+         * @description Files the conversation (and its attachments) under a requirement, or unfiles it.
+         */
+        patch: operations["inbox_file_thread"];
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/threads/{thread_id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark Read */
+        post: operations["inbox_mark_read"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -234,10 +365,60 @@ export interface components {
             /** Remaining Days */
             remaining_days: number;
         };
+        /** DocumentOut */
+        DocumentOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** File Name */
+            file_name: string;
+            /** Content Type */
+            content_type: string;
+            /** Size Bytes */
+            size_bytes: number;
+            source: components["schemas"]["DocumentSource"];
+            /** Requirement Id */
+            requirement_id: string | null;
+            /** Message Id */
+            message_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Uploaded By Name */
+            uploaded_by_name: string | null;
+            /** Download Url */
+            download_url: string;
+        };
+        /**
+         * DocumentSource
+         * @enum {string}
+         */
+        DocumentSource: "upload" | "email";
+        /** FileDocument */
+        FileDocument: {
+            /** Requirement Id */
+            requirement_id: string | null;
+        };
+        /** FileThread */
+        FileThread: {
+            /** Requirement Id */
+            requirement_id: string | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** InboxCounts */
+        InboxCounts: {
+            /** Unread */
+            unread: number;
+            /** Unfiled */
+            unfiled: number;
         };
         /** LoginIn */
         LoginIn: {
@@ -270,6 +451,41 @@ export interface components {
             phone: string | null;
             /** Organizations */
             organizations: components["schemas"]["OrganizationOut"][];
+        };
+        /**
+         * MessageDirection
+         * @enum {string}
+         */
+        MessageDirection: "inbound" | "outbound";
+        /** MessageOut */
+        MessageOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            direction: components["schemas"]["MessageDirection"];
+            /** From Email */
+            from_email: string;
+            /** From Name */
+            from_name: string | null;
+            /** To */
+            to: string[];
+            /** Cc */
+            cc: string[];
+            /** Subject */
+            subject: string;
+            /** Text Body */
+            text_body: string;
+            /**
+             * Sent At
+             * Format: date-time
+             */
+            sent_at: string;
+            /** Read At */
+            read_at: string | null;
+            /** Attachments */
+            attachments: components["schemas"]["DocumentOut"][];
         };
         /** NextSteps */
         NextSteps: {
@@ -373,6 +589,7 @@ export interface components {
             build: components["schemas"]["BuildState"];
             /** Stages */
             stages: components["schemas"]["Stage"][];
+            inbox: components["schemas"]["InboxCounts"];
         };
         /** ProjectOut */
         ProjectOut: {
@@ -500,6 +717,8 @@ export interface components {
             blocked_by: string[];
             /** On Critical Path */
             on_critical_path: boolean;
+            /** Document Count */
+            document_count: number;
         };
         /**
          * RequirementStatus
@@ -555,6 +774,70 @@ export interface components {
             /** Requirement Count */
             requirement_count: number;
         };
+        /** ThreadDetail */
+        ThreadDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Subject */
+            subject: string;
+            /** Counterparty Email */
+            counterparty_email: string;
+            /** Counterparty Name */
+            counterparty_name: string | null;
+            /**
+             * Last Message At
+             * Format: date-time
+             */
+            last_message_at: string;
+            /** Message Count */
+            message_count: number;
+            /** Unread Count */
+            unread_count: number;
+            /** Attachment Count */
+            attachment_count: number;
+            /** Requirement Id */
+            requirement_id: string | null;
+            /** Requirement Title */
+            requirement_title: string | null;
+            /** Snippet */
+            snippet: string;
+            /** Messages */
+            messages: components["schemas"]["MessageOut"][];
+        };
+        /** ThreadSummary */
+        ThreadSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Subject */
+            subject: string;
+            /** Counterparty Email */
+            counterparty_email: string;
+            /** Counterparty Name */
+            counterparty_name: string | null;
+            /**
+             * Last Message At
+             * Format: date-time
+             */
+            last_message_at: string;
+            /** Message Count */
+            message_count: number;
+            /** Unread Count */
+            unread_count: number;
+            /** Attachment Count */
+            attachment_count: number;
+            /** Requirement Id */
+            requirement_id: string | null;
+            /** Requirement Title */
+            requirement_title: string | null;
+            /** Snippet */
+            snippet: string;
+        };
         /** TokenOut */
         TokenOut: {
             /** Access Token */
@@ -569,6 +852,37 @@ export interface components {
             expires_in: number;
             /** Refresh Token */
             refresh_token?: string | null;
+        };
+        /** UploadRequest */
+        UploadRequest: {
+            /** File Name */
+            file_name: string;
+            /** Content Type */
+            content_type: string;
+            /** Size Bytes */
+            size_bytes: number;
+            /** Requirement Id */
+            requirement_id?: string | null;
+        };
+        /** UploadStarted */
+        UploadStarted: {
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            upload: components["schemas"]["UploadTarget"];
+        };
+        /** UploadTarget */
+        UploadTarget: {
+            /** Url */
+            url: string;
+            /** Method */
+            method: string;
+            /** Headers */
+            headers: {
+                [key: string]: string;
+            };
         };
         /** ValidationError */
         ValidationError: {
@@ -936,6 +1250,332 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["RequirementOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    documents_list_documents: {
+        parameters: {
+            query?: {
+                requirement_id?: string | null;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    documents_start_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadStarted"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    documents_complete_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    documents_delete_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    documents_file_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FileDocument"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    documents_export_documents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/zip": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    inbox_list_threads: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreadSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    inbox_get_thread: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreadDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    inbox_file_thread: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FileThread"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreadDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    inbox_mark_read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

@@ -1,12 +1,15 @@
 import type { Requirement } from "@arba/api-client";
 import { STATUS_TONE, statusActions, type ManualStatus, type RequirementStatus } from "@arba/shared";
 import { motion } from "motion/react";
-import type { MouseEvent } from "react";
+import { useRef, type MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useCelebrate } from "../components/Celebrations";
 import { Alert, Badge, Button, cx } from "../components/ui";
 import { $api, invalidateProjects } from "../lib/api";
+import { UPLOAD_ACCEPT } from "../lib/upload";
 import { useErrorMessage } from "../lib/useErrorMessage";
+import { UploadProgress } from "./DocumentsView";
+import { useUploads } from "./useUploads";
 
 interface Props {
   projectId: string;
@@ -39,6 +42,9 @@ export function RequirementCard({
     "/api/v1/projects/{project_id}/requirements/{requirement_id}/status",
     { onSuccess: () => invalidateProjects() },
   );
+
+  const uploads = useUploads(projectId);
+  const fileInput = useRef<HTMLInputElement>(null);
 
   const status = r.status as RequirementStatus;
   const started = !["not_started", "ready", "blocked"].includes(status);
@@ -93,6 +99,9 @@ export function RequirementCard({
           <Badge tone={STATUS_TONE[status]}>{t(`status.${status}`)}</Badge>
           {r.on_critical_path && <Badge tone="warning">⚡ {t("requirement.criticalPath")}</Badge>}
           {r.optional && <Badge>{t("requirement.optional")}</Badge>}
+          {r.document_count > 0 && (
+            <Badge tone="success">📎 {t("documents.count", { count: r.document_count })}</Badge>
+          )}
         </div>
         <h3 className="font-display text-lg font-bold leading-snug">{r.title}</h3>
         <p className="text-sm text-ink-soft">
@@ -128,8 +137,9 @@ export function RequirementCard({
       )}
 
       {update.error && <Alert>{message(update.error)}</Alert>}
+      <UploadProgress items={uploads.items} />
 
-      {actions.length > 0 && (
+      {(actions.length > 0 || canEdit) && (
         <div className="flex flex-wrap gap-2 pt-1">
           {actions.map((next, i) => (
             <Button
@@ -143,6 +153,29 @@ export function RequirementCard({
               {t(`requirement.action.${next}`)}
             </Button>
           ))}
+          {canEdit && (
+            <>
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={uploads.busy}
+                onClick={() => fileInput.current?.click()}
+              >
+                📎 {t("documents.attach")}
+              </Button>
+              <input
+                ref={fileInput}
+                type="file"
+                multiple
+                accept={UPLOAD_ACCEPT}
+                className="hidden"
+                onChange={(e) => {
+                  void uploads.upload([...(e.target.files ?? [])], r.id);
+                  e.target.value = "";
+                }}
+              />
+            </>
+          )}
         </div>
       )}
     </motion.article>

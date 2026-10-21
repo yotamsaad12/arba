@@ -11,6 +11,10 @@ from app.core.enums import (
     Channel,
     ClientType,
     DependencyKind,
+    DocumentSource,
+    DocumentStatus,
+    InboundStatus,
+    MessageDirection,
     OrgRole,
     ProjectRole,
     ProjectStatus,
@@ -218,6 +222,103 @@ class Dependency(Base):
     depends_on_id: Mapped[uuid.UUID] = mapped_column(
         sa.ForeignKey("requirements.id", ondelete="CASCADE"), primary_key=True
     )
+
+
+# --- Documents and mail ---------------------------------------------------------------
+
+
+class Document(IdMixin, TimestampMixin, Base):
+    """A file in the project folder: uploaded by a person or received as an email attachment."""
+
+    __tablename__ = "documents"
+
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
+    # None means not filed yet.
+    requirement_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("requirements.id", ondelete="SET NULL"), index=True
+    )
+    message_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("messages.id", ondelete="SET NULL"), index=True
+    )
+    storage_key: Mapped[str] = mapped_column(sa.String(300), unique=True)
+    file_name: Mapped[str] = mapped_column(sa.String(255))
+    content_type: Mapped[str] = mapped_column(sa.String(150))
+    size_bytes: Mapped[int] = mapped_column(sa.BigInteger)
+    source: Mapped[DocumentSource]
+    status: Mapped[DocumentStatus] = mapped_column(default=DocumentStatus.pending)
+    uploaded_by: Mapped[uuid.UUID | None] = mapped_column(sa.ForeignKey("users.id"))
+
+
+class Thread(IdMixin, TimestampMixin, Base):
+    """A conversation with one counterparty, usually about one requirement."""
+
+    __tablename__ = "threads"
+
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
+    requirement_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("requirements.id", ondelete="SET NULL"), index=True
+    )
+    subject: Mapped[str] = mapped_column(sa.String(500))
+    # Lowercased, without Re:/Fwd: prefixes; used to group replies that lost their headers.
+    normalized_subject: Mapped[str] = mapped_column(sa.String(500), index=True)
+    counterparty_email: Mapped[str] = mapped_column(sa.String(320))
+    counterparty_name: Mapped[str | None] = mapped_column(sa.String(200))
+    last_message_at: Mapped[datetime] = mapped_column(sa.DateTime(timezone=True))
+
+
+class Message(IdMixin, TimestampMixin, Base):
+    __tablename__ = "messages"
+    __table_args__ = (sa.UniqueConstraint("project_id", "rfc_message_id", name="project_rfc_id"),)
+
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
+    thread_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("threads.id", ondelete="CASCADE"), index=True
+    )
+    direction: Mapped[MessageDirection]
+    from_email: Mapped[str] = mapped_column(sa.String(320))
+    from_name: Mapped[str | None] = mapped_column(sa.String(200))
+    to: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    cc: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    subject: Mapped[str] = mapped_column(sa.String(500))
+    # Plain text only. HTML bodies are converted on arrival and never rendered.
+    text_body: Mapped[str] = mapped_column(sa.Text, default="")
+    # The RFC 5322 Message-ID, lowercased without angle brackets.
+    rfc_message_id: Mapped[str] = mapped_column(sa.String(500))
+    in_reply_to: Mapped[str | None] = mapped_column(sa.String(500))
+    references: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    sent_at: Mapped[datetime] = mapped_column(sa.DateTime(timezone=True))
+    read_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+    inbound_email_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("inbound_emails.id", ondelete="SET NULL")
+    )
+
+
+class InboundEmail(IdMixin, Base):
+    """Every webhook delivery, stored before processing so nothing is lost if processing fails."""
+
+    __tablename__ = "inbound_emails"
+    __table_args__ = (
+        sa.UniqueConstraint("provider", "provider_message_id", name="provider_message"),
+    )
+
+    provider: Mapped[str] = mapped_column(sa.String(32))
+    provider_message_id: Mapped[str] = mapped_column(sa.String(200))
+    raw_key: Mapped[str] = mapped_column(sa.String(300))
+    status: Mapped[InboundStatus] = mapped_column(default=InboundStatus.received)
+    error: Mapped[str | None] = mapped_column(sa.Text)
+    project_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("projects.id", ondelete="SET NULL"), index=True
+    )
+    received_at: Mapped[datetime] = mapped_column(
+        sa.DateTime(timezone=True), server_default=sa.func.now()
+    )
+    processed_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
 
 
 # --- Audit ----------------------------------------------------------------------------

@@ -2,7 +2,7 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute
 
-from app.api.v1 import auth, projects, templates
+from app.api.v1 import auth, documents, inbox, projects, storage, templates, webhooks
 from app.core.config import settings
 from app.core.errors import install_error_handlers
 
@@ -27,6 +27,10 @@ def create_app() -> FastAPI:
     v1.include_router(auth.router)
     v1.include_router(templates.router)
     v1.include_router(projects.router)
+    v1.include_router(documents.router)
+    v1.include_router(inbox.router)
+    v1.include_router(storage.router)
+    v1.include_router(webhooks.router)
     app.include_router(v1)
 
     @app.get("/health", include_in_schema=False)

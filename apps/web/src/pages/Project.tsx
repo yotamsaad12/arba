@@ -8,20 +8,30 @@ import { useCelebrate } from "../components/Celebrations";
 import { Alert, Spinner, cx } from "../components/ui";
 import { $api } from "../lib/api";
 import { useErrorMessage } from "../lib/useErrorMessage";
+import { DocumentsView } from "../project/DocumentsView";
+import { InboxView } from "../project/InboxView";
 import { RequirementCard } from "../project/RequirementCard";
 import { STAGE_ICON, isStageKey, sceneModel } from "../scene/model";
 import { useFocusLabel } from "../scene/useFocusLabel";
 import { LiveWorld } from "../world/LiveWorld";
 import { useAuthorities } from "../world/authorities";
 
-type Tab = "now" | "all";
+const TABS = ["now", "all", "inbox", "documents"] as const;
+type Tab = (typeof TABS)[number];
+const TAB_LABEL = {
+  now: "project.tabNow",
+  all: "project.tabAll",
+  inbox: "project.tabInbox",
+  documents: "project.tabDocuments",
+} as const;
+const TAB_SHORT_LABEL = { ...TAB_LABEL, now: "project.tabNowShort", all: "project.tabAllShort" } as const;
 
 export function ProjectPage() {
   const { projectId = "" } = useParams();
   const { t } = useTranslation();
   const message = useErrorMessage();
   const [search, setSearch] = useSearchParams();
-  const tab: Tab = search.get("tab") === "all" ? "all" : "now";
+  const tab: Tab = TABS.find((key) => key === search.get("tab")) ?? "now";
   const path = { params: { path: { project_id: projectId } } };
 
   const project = $api.useQuery("get", "/api/v1/projects/{project_id}", path);
@@ -55,46 +65,64 @@ export function ProjectPage() {
       <StageStepper project={p} onSelect={goToStage} />
 
       <LayoutGroup id="tabs">
-        <nav className="relative grid grid-cols-2 rounded-full border-2 border-ink bg-surface p-1" role="tablist">
-          {(["now", "all"] as const).map((key) => (
-            <button
-              key={key}
-              role="tab"
-              aria-selected={tab === key}
-              className={cx(
-                "relative min-h-11 rounded-full font-display font-bold transition-colors",
-                tab === key ? "text-white" : "text-ink-soft hover:text-ink",
-              )}
-              onClick={() => setSearch(key === "all" ? { tab: "all" } : {}, { replace: true })}
-            >
-              {tab === key && (
-                <motion.span
-                  layoutId="tab-pill"
-                  className="absolute inset-0 rounded-full bg-ink"
-                  transition={{ type: "spring", stiffness: 420, damping: 34 }}
-                />
-              )}
-              <span className="relative">{t(key === "now" ? "project.tabNow" : "project.tabAll")}</span>
-            </button>
-          ))}
+        <nav className="relative grid grid-cols-4 rounded-full border-2 border-ink bg-surface p-1" role="tablist">
+          {TABS.map((key) => {
+            const badge = key === "inbox" ? p.inbox.unread : 0;
+            return (
+              <button
+                key={key}
+                role="tab"
+                aria-selected={tab === key}
+                className={cx(
+                  "relative min-h-11 rounded-full px-1 font-display text-sm font-bold transition-colors sm:text-base",
+                  tab === key ? "text-white" : "text-ink-soft hover:text-ink",
+                )}
+                onClick={() => setSearch(key === "now" ? {} : { tab: key }, { replace: true })}
+              >
+                {tab === key && (
+                  <motion.span
+                    layoutId="tab-pill"
+                    className="absolute inset-0 rounded-full bg-ink"
+                    transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                  />
+                )}
+                <span className="relative hidden sm:inline">{t(TAB_LABEL[key])}</span>
+                <span className="relative sm:hidden">{t(TAB_SHORT_LABEL[key])}</span>
+                <AnimatePresence>
+                  {badge > 0 && (
+                    <motion.span
+                      key={badge}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      className="absolute -top-2 end-1 grid min-w-5 place-items-center rounded-full border-2 border-ink bg-accent px-1 text-xs text-ink"
+                    >
+                      {badge}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </button>
+            );
+          })}
         </nav>
       </LayoutGroup>
 
       <AnimatePresence mode="wait">
         <motion.div
           key={tab}
-          initial={{ opacity: 0, x: tab === "all" ? -24 : 24 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
         >
-          {tab === "now" ? (
-            steps.data ? (
+          {tab === "now" &&
+            (steps.data ? (
               <NextStepsView projectId={projectId} steps={steps.data} titles={titles} canEdit={canEdit} />
             ) : (
               <Spinner label={t("app.loading")} />
-            )
-          ) : requirements.data ? (
+            ))}
+          {tab !== "now" && !requirements.data && <Spinner label={t("app.loading")} />}
+          {tab === "all" && requirements.data && (
             <AllRequirementsView
               projectId={projectId}
               stages={requirements.data.stages}
@@ -102,8 +130,24 @@ export function ProjectPage() {
               titles={titles}
               canEdit={canEdit}
             />
-          ) : (
-            <Spinner label={t("app.loading")} />
+          )}
+          {tab === "inbox" && requirements.data && (
+            <InboxView
+              projectId={projectId}
+              inboxAddress={p.inbox_address}
+              canEdit={canEdit}
+              stages={requirements.data.stages}
+              requirements={requirements.data.requirements}
+            />
+          )}
+          {tab === "documents" && requirements.data && (
+            <DocumentsView
+              projectId={projectId}
+              projectName={p.name}
+              canEdit={canEdit}
+              stages={requirements.data.stages}
+              requirements={requirements.data.requirements}
+            />
           )}
         </motion.div>
       </AnimatePresence>

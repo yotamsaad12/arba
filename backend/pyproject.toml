@@ -13,6 +13,7 @@ dependencies = [
     "pyjwt>=2.10",
     "pwdlib[argon2]>=0.2",
     "pyyaml>=6.0",
+    "boto3>=1.35",
 ]
 
 [project.optional-dependencies]
@@ -23,6 +24,7 @@ dev = [
     "ruff>=0.8",
     "mypy>=1.13",
     "types-pyyaml",
+    "boto3-stubs[s3]",
 ]
 
 [build-system]

@@ -21,6 +21,19 @@ make web       # terminal 2: http://localhost:5180
 `make test` runs the backend tests against the `arba_test` database (created by Docker on first start).
 `make typecheck` lints the backend and typechecks the frontend.
 
+### Trying the inbox locally
+
+Every project has an inbox address (shown on the project page). Without a mail provider, send a
+sample email from an approving authority straight to the local webhook:
+
+```sh
+make test-email TO=p-xxxxxxxx@in.arba.co.il                       # water company approval + PDF
+make test-email TO=p-xxxxxxxx@in.arba.co.il ARGS="--sample hfc"   # Home Front Command request
+make test-email TO=p-xxxxxxxx@in.arba.co.il ARGS="--reply --attach plan.pdf"
+```
+
+Uploaded and received files are stored under `backend/.storage/` in development.
+
 ## Layout
 
 ```

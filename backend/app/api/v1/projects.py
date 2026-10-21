@@ -6,6 +6,8 @@ from app.core.deps import DB, CurrentUser
 from app.core.enums import ProjectRole
 from app.core.enums import RequirementStatus as S
 from app.db.models import Project, Requirement
+from app.modules.documents.service import document_counts
+from app.modules.inbox.service import counts as inbox_counts
 from app.modules.projects import service
 from app.modules.projects.schemas import (
     BuildState,
@@ -73,6 +75,7 @@ def _requirement_out(
     deps: dict[uuid.UUID, list[uuid.UUID]],
     result: EngineResult[uuid.UUID],
     critical: set[uuid.UUID],
+    documents: dict[uuid.UUID, int],
 ) -> RequirementOut:
     return RequirementOut(
         id=r.id,
@@ -93,6 +96,7 @@ def _requirement_out(
         depends_on=deps[r.id],
         blocked_by=result.blocked_by[r.id],
         on_critical_path=r.id in critical,
+        document_count=documents.get(r.id, 0),
     )
 
 
@@ -112,7 +116,11 @@ async def list_projects(db: DB, user: CurrentUser) -> list[ProjectOut]:
 async def get_project(project_id: uuid.UUID, db: DB, user: CurrentUser) -> ProjectDetail:
     project, role = await service.get_project_for_user(db, project_id, user)
     summary = await _summarize(db, project, role)
-    return ProjectDetail(**summary.model_dump(), stages=stages_of(project))
+    return ProjectDetail(
+        **summary.model_dump(),
+        stages=stages_of(project),
+        inbox=await inbox_counts(db, project.id),
+    )
 
 
 @router.get("/{project_id}/requirements")
@@ -121,9 +129,10 @@ async def list_requirements(project_id: uuid.UUID, db: DB, user: CurrentUser) ->
     requirements, deps = await requirements_service.load_graph(db, project.id)
     result = requirements_service.run_engine(requirements, deps)
     critical = set(result.critical_path)
+    counts = await document_counts(db, project.id)
     return RequirementList(
         stages=stages_of(project),
-        requirements=[_requirement_out(r, deps, result, critical) for r in requirements],
+        requirements=[_requirement_out(r, deps, result, critical, counts) for r in requirements],
     )
 
 
@@ -134,7 +143,8 @@ async def next_steps(project_id: uuid.UUID, db: DB, user: CurrentUser) -> NextSt
     requirements, deps = await requirements_service.load_graph(db, project.id)
     result = requirements_service.run_engine(requirements, deps)
     critical = set(result.critical_path)
-    out = {r.id: _requirement_out(r, deps, result, critical) for r in requirements}
+    counts = await document_counts(db, project.id)
+    out = {r.id: _requirement_out(r, deps, result, critical, counts) for r in requirements}
 
     def having(*statuses: S) -> list[RequirementOut]:
         return [out[r.id] for r in requirements if r.status in statuses]
@@ -168,4 +178,5 @@ async def update_requirement_status(
     requirements, deps = await requirements_service.load_graph(db, project.id)
     result = requirements_service.run_engine(requirements, deps)
     requirement = next(r for r in requirements if r.id == requirement_id)
-    return _requirement_out(requirement, deps, result, set(result.critical_path))
+    counts = await document_counts(db, project.id)
+    return _requirement_out(requirement, deps, result, set(result.critical_path), counts)

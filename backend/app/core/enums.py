@@ -75,3 +75,28 @@ class AuthorityType(StrEnum):
     green_building_lab = "green_building_lab"
     contractor = "contractor"
     owner = "owner"
+
+
+class DocumentSource(StrEnum):
+    upload = "upload"
+    email = "email"
+
+
+class DocumentStatus(StrEnum):
+    # Upload URL issued, file not confirmed yet.
+    pending = "pending"
+    ready = "ready"
+
+
+class MessageDirection(StrEnum):
+    inbound = "inbound"
+    outbound = "outbound"
+
+
+class InboundStatus(StrEnum):
+    received = "received"
+    processed = "processed"
+    # No project owns any of the recipient addresses. Kept for review, never dropped.
+    unroutable = "unroutable"
+    duplicate = "duplicate"
+    failed = "failed"

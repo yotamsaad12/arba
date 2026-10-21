@@ -78,8 +78,15 @@ class ProjectOut(BaseModel):
     build: BuildState
 
 
+class InboxCounts(BaseModel):
+    unread: int
+    # Conversations not filed under a requirement yet.
+    unfiled: int
+
+
 class ProjectDetail(ProjectOut):
     stages: list[Stage]
+    inbox: InboxCounts
 
 
 class RequirementOut(BaseModel):
@@ -102,6 +109,7 @@ class RequirementOut(BaseModel):
     # Dependencies not done yet. Non-empty on a started requirement means something regressed.
     blocked_by: list[uuid.UUID]
     on_critical_path: bool
+    document_count: int
 
 
 class RequirementList(BaseModel):

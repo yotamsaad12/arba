@@ -16,3 +16,6 @@ __pycache__/
 
 .DS_Store
 ~$*.docx
+
+.storage/
+*.egg-info/

@@ -1,4 +1,4 @@
-.PHONY: setup up down migrate seed api web test typecheck api-client
+.PHONY: setup up down migrate seed api web test typecheck api-client test-email
 
 COMPOSE = docker compose -f infra/docker-compose.yml
 PY = backend/.venv/bin
@@ -34,3 +34,6 @@ typecheck:
 
 api-client:  ## Regenerate the TypeScript client after changing the API
 	npm run api:generate
+
+test-email:  ## Send a sample authority email to a project inbox: make test-email TO=p-xxxx@in.arba.co.il
+	cd backend && .venv/bin/python -m app.scripts.send_test_email $(TO) $(ARGS)
