@@ -1,0 +1,19 @@
+{
+  "name": "@arba/i18n",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "i18next": "^26.5.4",
+    "react-i18next": "^17.1.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3"
+  }
+}

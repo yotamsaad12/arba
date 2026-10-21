@@ -1,0 +1,18 @@
+{
+  "name": "arba",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev -w @arba/web",
+    "build": "npm run build -w @arba/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "api:generate": "cd backend && .venv/bin/python -m app.scripts.export_openapi ../packages/api-client/openapi.json && cd .. && npm run generate -w @arba/api-client"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3"
+  }
+}

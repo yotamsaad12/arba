@@ -1,0 +1,38 @@
+# Local development services. Start with: make up
+name: arba
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: arba
+      POSTGRES_PASSWORD: arba
+      POSTGRES_DB: arba
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U arba"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  # S3-compatible storage for documents comes with milestone 3. MinIO no longer publishes
+  # free Docker images, so pick a replacement then.
+
+  # Catches outgoing mail locally. UI at http://localhost:8025
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  postgres-data:

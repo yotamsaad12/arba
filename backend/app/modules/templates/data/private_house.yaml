@@ -1,0 +1,434 @@
+# תבנית: בית פרטי, מהיתר ועד טופס 4.
+# מבוססת על מקורות ציבוריים. יש לאמת מול מהנדס ומול הרשות המקומית לפני שימוש.
+#
+# שדות לכל דרישה:
+#   key            מזהה קבוע (באנגלית). משמש לתלויות.
+#   authority      סוג הגורם המאשר (ראו AuthorityType).
+#   channel        email | portal | in_person
+#   days           הערכת משך בימים, לחישוב הנתיב הקריטי.
+#   repeat         per_floor: הדרישה נפרשת לכל קומה.
+#   depends_on     דרישות שחייבות להסתיים לפני. אם שני הצדדים per_floor, התלות היא באותה קומה.
+#   previous_floor דרישות per_floor בקומה הקודמת.
+#   optional       אפשר לסמן "לא רלוונטי".
+#   gate           הצעד האחרון: הגשת הבקשה לטופס 4.
+
+key: private_house
+version: 1
+name: בית פרטי
+description: מהיתר הבנייה ועד טופס 4, לבעלי בית שבונים מול קבלן.
+client_type: private
+building_type: private_house
+
+stages:
+  - key: pre
+    title: לפני שמתחילים
+    description: מסדרים את הניירת ואת אנשי המקצוע לפני שהקבלן עולה לשטח.
+  - key: foundations
+    title: סימון ויסודות
+    description: המודד מסמן את הבית במגרש, חופרים ויוצקים את היסודות.
+  - key: skeleton
+    title: שלד
+    description: בונים את הקומות. השלבים חוזרים בכל קומה.
+  - key: mamad
+    title: ממ"ד
+    description: החדר המוגן נבדק לפי דרישות פיקוד העורף לפני היציקה.
+  - key: envelope
+    title: מעטפת ואיטום
+    description: קירות חוץ, חיפוי ואיטום של הגג, המרפסות והמרתף.
+  - key: systems
+    title: מערכות
+    description: מים, ביוב, חשמל וגז. הבדיקות נעשות לפני שסוגרים את הקירות.
+  - key: finish
+    title: גמר ומסירה
+    description: מדידה סופית, בדק בית ותיקון ליקויים.
+  - key: green
+    title: בנייה ירוקה
+    description: רק אם הרשות קובעת שתקן 5281 חל על הבית.
+  - key: form4
+    title: אישורים לטופס 4
+    description: האישורים שהרשות דורשת. הרשימה משתנה בין רשויות.
+
+requirements:
+  # --- לפני שמתחילים ---
+  - key: permit
+    stage: pre
+    title: היתר בנייה בתוקף ורשימת התנאים שבו
+    description: בודקים שההיתר בתוקף ומעתיקים את כל התנאים שנקבעו בו. התנאים קובעים חלק מהדרישות בהמשך.
+    authority: municipality
+    channel: in_person
+    days: 3
+    documents: [היתר בנייה, רשימת תנאי ההיתר]
+
+  - key: plans
+    stage: pre
+    title: תיק תוכניות מאושר
+    description: אדריכלות, קונסטרוקציה, אינסטלציה וחשמל, בגרסה שאושרה בהיתר.
+    authority: municipality
+    channel: in_person
+    days: 5
+    documents: [תוכנית אדריכלות, תוכנית קונסטרוקציה, תוכנית אינסטלציה, תוכנית חשמל]
+    depends_on: [permit]
+
+  - key: roles
+    stage: pre
+    title: מינוי בעלי התפקידים שהרשות דורשת
+    description: למשל מהנדס אחראי לביקורת על הביצוע. בודקים מול תנאי ההיתר מי חייב להיות ממונה.
+    authority: municipality
+    channel: email
+    days: 5
+    documents: [כתבי מינוי]
+    depends_on: [permit]
+
+  - key: contract
+    stage: pre
+    title: חוזה עם הקבלן
+    description: לוח זמנים, אבני דרך לתשלום, ומי אחראי לקבל את האישורים לטופס 4.
+    authority: contractor
+    channel: in_person
+    days: 7
+    documents: [חוזה חתום]
+
+  - key: supervisor
+    stage: pre
+    title: החלטה על מפקח בנייה
+    description: אין חובה, אבל מפקח מלווה את כל השלבים ומוודא שהבדיקות נעשות ותקינות.
+    authority: owner
+    channel: in_person
+    days: 3
+    optional: true
+
+  - key: green_check
+    stage: pre
+    title: בירור ברשות אם חלות דרישות בנייה ירוקה
+    description: שואלים את הרשות אם תקן 5281 חל על הבית ובאיזו רמת כוכבים, ואם נדרש דירוג אנרגטי (תקן 5282).
+    authority: municipality
+    channel: email
+    days: 7
+    depends_on: [permit]
+
+  - key: form4_list
+    stage: pre
+    title: קבלת רשימת האישורים לטופס 4 מהרשות
+    description: הרשות מוציאה רשימה של האישורים הנדרשים ושל הגורמים המאשרים. כדאי לקבל אותה כבר עכשיו ולא בסוף.
+    authority: municipality
+    channel: email
+    days: 7
+    documents: [רשימת אישורים לטופס 4]
+    depends_on: [permit]
+
+  # --- סימון ויסודות ---
+  - key: marking
+    stage: foundations
+    title: סימון המבנה במגרש על ידי מודד מוסמך
+    authority: surveyor
+    channel: in_person
+    days: 2
+    documents: [מפת סימון]
+    depends_on: [plans, roles, contract]
+
+  - key: excavation
+    stage: foundations
+    title: חפירה לפי המלצות יועץ הקרקע
+    authority: soil_consultant
+    channel: in_person
+    days: 5
+    depends_on: [marking]
+
+  - key: foundation_rebar
+    stage: foundations
+    title: בדיקת ברזל ביסודות לפני יציקה
+    description: הקונסטרוקטור בודק את הברזל ומאשר בכתב. בלי האישור הזה לא יוצקים.
+    authority: structural_engineer
+    channel: in_person
+    days: 1
+    documents: [אישור קונסטרוקטור, תמונות]
+    depends_on: [excavation]
+
+  - key: foundation_pour
+    stage: foundations
+    title: יציקת יסודות ודגימות בטון למעבדה
+    authority: testing_lab
+    channel: in_person
+    days: 2
+    documents: [תעודות משלוח בטון, תוצאות מעבדה]
+    depends_on: [foundation_rebar]
+
+  # --- שלד (חוזר בכל קומה) ---
+  - key: formwork
+    stage: skeleton
+    title: תבניות, מפלסים ופתחים לפי התוכנית
+    authority: contractor
+    channel: in_person
+    days: 5
+    repeat: per_floor
+    depends_on: [foundation_pour]
+    previous_floor: [pour]
+
+  - key: sleeves
+    stage: skeleton
+    title: שרוולים ומעברים לאינסטלציה ולחשמל
+    authority: contractor
+    channel: in_person
+    days: 1
+    repeat: per_floor
+    depends_on: [formwork]
+
+  - key: rebar
+    stage: skeleton
+    title: בדיקת ברזל לפני יציקה
+    description: קטרים, מרווחים וכיסוי לפי תוכנית הקונסטרוקציה.
+    authority: structural_engineer
+    channel: in_person
+    days: 1
+    repeat: per_floor
+    documents: [אישור קונסטרוקטור]
+    depends_on: [sleeves]
+
+  - key: photos
+    stage: skeleton
+    title: תיעוד מצולם עד רגע היציקה
+    authority: contractor
+    channel: in_person
+    days: 1
+    repeat: per_floor
+    documents: [תמונות]
+    depends_on: [rebar]
+
+  - key: pour
+    stage: skeleton
+    title: יציקה ודגימות בטון
+    authority: testing_lab
+    channel: in_person
+    days: 2
+    repeat: per_floor
+    documents: [תעודות משלוח בטון, תוצאות מעבדה]
+    depends_on: [rebar, photos]
+
+  # --- ממ"ד ---
+  - key: mamad_rebar
+    stage: mamad
+    title: בדיקת ברזל ותבניות של הממ"ד לפני יציקה
+    description: לפי דרישות פיקוד העורף. מתאמים את הבדיקה מראש.
+    authority: home_front_command
+    channel: portal
+    days: 3
+    documents: [אישור בדיקת ברזל ממ"ד]
+    depends_on: [foundation_pour]
+
+  - key: mamad_openings
+    stage: mamad
+    title: פתחים, סינון ואוורור לפי המפרט
+    authority: home_front_command
+    channel: in_person
+    days: 3
+    depends_on: [mamad_rebar]
+
+  - key: mamad_approval
+    stage: mamad
+    title: אישורי בדיקה של הממ"ד
+    authority: home_front_command
+    channel: portal
+    days: 14
+    documents: [אישור ממ"ד]
+    depends_on: [mamad_openings]
+
+  # --- מעטפת ואיטום ---
+  - key: walls
+    stage: envelope
+    title: בנייה וחיפוי לפי התוכנית
+    authority: contractor
+    channel: in_person
+    days: 20
+    depends_on: [pour]
+
+  - key: waterproofing
+    stage: envelope
+    title: איטום גגות, מרפסות ומרתף, ובדיקת הצפה
+    authority: testing_lab
+    channel: email
+    days: 5
+    documents: [אישור תקינות איטום]
+    depends_on: [walls]
+
+  # --- מערכות ---
+  - key: plumbing_pressure
+    stage: systems
+    title: בדיקות לחץ לצנרת המים
+    description: חייבות להיעשות לפני שסוגרים את הקירות.
+    authority: plumber
+    channel: in_person
+    days: 2
+    documents: [אישור בדיקת לחץ]
+    depends_on: [walls]
+
+  - key: sewage
+    stage: systems
+    title: ביוב וניקוז, צילום צנרת ובדיקת מז"ח
+    description: מז"ח הוא מכשיר למניעת זרם חוזר.
+    authority: plumber
+    channel: in_person
+    days: 3
+    documents: [צילום צנרת, אישור בדיקת מז"ח]
+    depends_on: [walls]
+
+  - key: close_walls
+    stage: systems
+    title: סגירת קירות
+    authority: contractor
+    channel: in_person
+    days: 10
+    depends_on: [plumbing_pressure, sewage]
+
+  - key: electrical
+    stage: systems
+    title: בדיקת חשמל על ידי בודק מוסמך
+    authority: electrical_inspector
+    channel: email
+    days: 5
+    documents: [אישור בודק חשמל]
+    depends_on: [close_walls]
+
+  - key: gas
+    stage: systems
+    title: בדיקה והתקנה של הגז על ידי מתקין מוסמך
+    authority: gas_installer
+    channel: email
+    days: 3
+    documents: [אישור מתקין גז]
+    depends_on: [close_walls]
+
+  # --- גמר ומסירה ---
+  - key: as_built
+    stage: finish
+    title: מדידה סופית של המבנה (מפת עדות)
+    authority: surveyor
+    channel: email
+    days: 7
+    documents: [מפת עדות]
+    depends_on: [close_walls, waterproofing]
+
+  - key: home_inspection
+    stage: finish
+    title: בדק בית לפני קבלת המפתח
+    authority: owner
+    channel: in_person
+    days: 3
+    optional: true
+    documents: [דוח בדק בית]
+    depends_on: [electrical, gas, waterproofing]
+
+  - key: defects
+    stage: finish
+    title: רשימת ליקויים לקבלן ומעקב אחרי התיקונים
+    authority: contractor
+    channel: email
+    days: 14
+    depends_on: [home_inspection]
+
+  # --- בנייה ירוקה (אם חלה) ---
+  - key: green_preliminary
+    stage: green
+    title: אישור מקדמי ממעבדה מאושרת לבנייה ירוקה
+    authority: green_building_lab
+    channel: email
+    days: 21
+    optional: true
+    documents: [אישור מקדמי]
+    depends_on: [green_check]
+
+  - key: green_final
+    stage: green
+    title: אישור שלב ב׳ מהמעבדה לבנייה ירוקה
+    description: תנאי לתעודת גמר כשהתקן חל על הבית.
+    authority: green_building_lab
+    channel: email
+    days: 21
+    optional: true
+    documents: [אישור שלב ב׳]
+    depends_on: [green_preliminary, waterproofing, electrical]
+
+  # --- אישורים לטופס 4 ---
+  - key: water_corp
+    stage: form4
+    title: אישור חיבור למים וביוב מתאגיד המים
+    description: כדאי לפתוח את הבקשה כבר בשלב האינסטלציה.
+    authority: water_corporation
+    channel: portal
+    days: 21
+    documents: [אישור תאגיד המים]
+    depends_on: [sewage, plumbing_pressure]
+
+  - key: fire
+    stage: form4
+    title: אישור כבאות והצלה
+    description: לברר בתחילת הפרויקט אם נדרש לבית פרטי. אם לא, מסמנים "לא רלוונטי".
+    authority: fire_department
+    channel: portal
+    days: 21
+    optional: true
+    documents: [אישור כבאות]
+    depends_on: [close_walls]
+
+  - key: mamad_cert
+    stage: form4
+    title: אישור ממ"ד מפיקוד העורף
+    authority: home_front_command
+    channel: portal
+    days: 14
+    documents: [אישור פיקוד העורף]
+    depends_on: [mamad_approval]
+
+  - key: protected_waterproofing
+    stage: form4
+    title: אישור תקינות איטום ומרחבים מוגנים
+    authority: testing_lab
+    channel: email
+    days: 10
+    documents: [אישור מכון התקנים או מעבדה מוסמכת]
+    depends_on: [waterproofing, mamad_approval]
+
+  - key: concrete_cert
+    stage: form4
+    title: ריכוז תוצאות הבטון מכל היציקות
+    authority: testing_lab
+    channel: email
+    days: 5
+    documents: [ריכוז תוצאות מעבדה]
+    depends_on: [foundation_pour, pour]
+
+  - key: engineer_declaration
+    stage: form4
+    title: הצהרת המהנדס האחראי
+    authority: supervising_engineer
+    channel: email
+    days: 7
+    documents: [הצהרת מהנדס]
+    depends_on: [concrete_cert, protected_waterproofing, electrical, gas, as_built]
+
+  - key: municipal
+    stage: form4
+    title: דרישות עירוניות (מספור בית, פילרים)
+    authority: municipality
+    channel: in_person
+    days: 14
+    depends_on: [as_built]
+
+  - key: form4_submit
+    stage: form4
+    title: הגשת הבקשה לטופס 4 לוועדה המקומית
+    description: בבית פרטי, בעל המקרקעין מגיש את הבקשה, לא הקבלן.
+    authority: owner
+    channel: in_person
+    days: 30
+    gate: true
+    documents: [טופס בקשה, כל האישורים]
+    depends_on:
+      - form4_list
+      - water_corp
+      - fire
+      - mamad_cert
+      - protected_waterproofing
+      - engineer_declaration
+      - municipal
+      - green_final
+      - defects
