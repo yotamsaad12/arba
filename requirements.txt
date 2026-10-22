@@ -1,0 +1,15 @@
+# Python packages for the Vercel function (api/index.py). Mirrors backend/pyproject.toml,
+# without boto3: files live in Postgres on Vercel, and S3 is optional.
+fastapi>=0.115
+sqlalchemy[asyncio]>=2.0.36
+asyncpg>=0.30
+alembic>=1.14
+pydantic[email]>=2.9
+pydantic-settings>=2.6
+pyjwt>=2.10
+pwdlib[argon2]>=0.2
+pyyaml>=6.0
+anthropic>=2.0
+httpx>=0.28
+pypdf>=5.0
+python-multipart>=0.0.20

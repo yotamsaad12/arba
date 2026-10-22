@@ -50,16 +50,11 @@ def _expiry() -> datetime:
     return datetime.now(UTC) + timedelta(minutes=settings.upload_url_minutes)
 
 
-class LocalStorage:
-    def __init__(self, root: Path, url_prefix: str = "/api/v1/storage"):
-        self.root = root.resolve()
-        self.url_prefix = url_prefix
+class SignedUrlStorage:
+    """Storage whose upload and download links point back at this API (api/v1/storage.py),
+    as signed, short-lived JWTs."""
 
-    def path(self, key: str) -> Path:
-        path = (self.root / key).resolve()
-        if self.root not in path.parents:
-            raise ValueError("storage key escapes the storage root")
-        return path
+    url_prefix = "/api/v1/storage"
 
     def _token(self, claims: dict[str, object]) -> str:
         payload = {**claims, "aud": _AUDIENCE, "exp": _expiry()}
@@ -84,6 +79,24 @@ class LocalStorage:
         except jwt.PyJWTError:
             return None
         return claims if claims.get("op") == op else None
+
+    async def put(self, key: str, data: bytes, content_type: str) -> None:
+        raise NotImplementedError
+
+    async def get(self, key: str) -> bytes:
+        raise NotImplementedError
+
+
+class LocalStorage(SignedUrlStorage):
+    def __init__(self, root: Path, url_prefix: str = "/api/v1/storage"):
+        self.root = root.resolve()
+        self.url_prefix = url_prefix
+
+    def path(self, key: str) -> Path:
+        path = (self.root / key).resolve()
+        if self.root not in path.parents:
+            raise ValueError("storage key escapes the storage root")
+        return path
 
     async def put(self, key: str, data: bytes, content_type: str) -> None:
         await asyncio.to_thread(self._write, key, data)
@@ -162,7 +175,58 @@ class S3Storage:
 
 
 @lru_cache
+class DatabaseStorage(SignedUrlStorage):
+    """Files in Postgres, for hosts without a lasting disk (serverless). Fine for documents of
+    a few megabytes; S3 is the step up when volumes grow."""
+
+    async def put(self, key: str, data: bytes, content_type: str) -> None:
+        from sqlalchemy.dialects.postgresql import insert
+
+        from app.db.models import StoredFile
+        from app.db.session import SessionLocal
+
+        async with SessionLocal() as db:
+            values = {"key": key, "content_type": content_type, "data": data, "size": len(data)}
+            await db.execute(
+                insert(StoredFile)
+                .values(**values)
+                .on_conflict_do_update(index_elements=["key"], set_=values)
+            )
+            await db.commit()
+
+    async def get(self, key: str) -> bytes:
+        from app.db.models import StoredFile
+        from app.db.session import SessionLocal
+
+        async with SessionLocal() as db:
+            row = await db.get(StoredFile, key)
+        if row is None:
+            raise FileNotFoundError(key)
+        return row.data
+
+    async def size(self, key: str) -> int | None:
+        from sqlalchemy import select
+
+        from app.db.models import StoredFile
+        from app.db.session import SessionLocal
+
+        async with SessionLocal() as db:
+            return await db.scalar(select(StoredFile.size).where(StoredFile.key == key))
+
+    async def delete(self, key: str) -> None:
+        from sqlalchemy import delete
+
+        from app.db.models import StoredFile
+        from app.db.session import SessionLocal
+
+        async with SessionLocal() as db:
+            await db.execute(delete(StoredFile).where(StoredFile.key == key))
+            await db.commit()
+
+
 def get_storage() -> Storage:
+    if settings.storage_backend == "database":
+        return DatabaseStorage()
     if settings.storage_backend == "s3":
         assert settings.s3_bucket
         return S3Storage(settings.s3_bucket, settings.s3_region, settings.s3_endpoint_url)

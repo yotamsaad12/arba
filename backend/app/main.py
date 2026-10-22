@@ -9,6 +9,7 @@ from fastapi.routing import APIRoute
 from app.api.v1 import (
     auth,
     catchup,
+    cron,
     dev,
     directory,
     documents,
@@ -61,6 +62,18 @@ def create_app() -> FastAPI:
     )
     install_error_handlers(app)
 
+    if settings.serverless:
+        from fastapi import Request
+
+        from app.core.bootstrap import ensure_ready
+
+        @app.middleware("http")
+        async def _bootstrap(request: Request, call_next):  # type: ignore[no-untyped-def]
+            # First request on a fresh instance: migrate and load reference data once.
+            if request.url.path.startswith("/api/"):
+                await ensure_ready()
+            return await call_next(request)
+
     v1 = APIRouter(prefix="/api/v1")
     v1.include_router(auth.router)
     v1.include_router(templates.router)
@@ -72,6 +85,7 @@ def create_app() -> FastAPI:
     v1.include_router(directory.router)
     v1.include_router(catchup.router)
     v1.include_router(outreach.router)
+    v1.include_router(cron.router)
     v1.include_router(catchup.callbacks)
     v1.include_router(storage.router)
     v1.include_router(webhooks.router)
@@ -81,6 +95,7 @@ def create_app() -> FastAPI:
     app.include_router(v1)
 
     @app.get("/health", include_in_schema=False)
+    @app.get("/api/health", include_in_schema=False)
     async def health() -> dict[str, str]:
         return {"status": "ok"}
 

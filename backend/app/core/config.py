@@ -3,7 +3,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import model_validator
+from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEV_JWT_SECRET = "dev-only-insecure-jwt-secret-change-me"
@@ -20,7 +20,11 @@ class Settings(BaseSettings):
     )
 
     env: str = "dev"
-    database_url: str = "postgresql+asyncpg://arba:arba@localhost:5432/arba"
+    # Vercel's Postgres (Neon) integration provides DATABASE_URL; ARBA_DATABASE_URL wins.
+    database_url: str = Field(
+        default="postgresql+asyncpg://arba:arba@localhost:5432/arba",
+        validation_alias=AliasChoices("ARBA_DATABASE_URL", "DATABASE_URL", "POSTGRES_URL"),
+    )
 
     jwt_secret: str = DEV_JWT_SECRET
     access_token_minutes: int = 15
@@ -32,7 +36,15 @@ class Settings(BaseSettings):
 
     # File storage. "local" keeps files on disk and serves them through signed API URLs;
     # "s3" uses presigned S3 URLs so files never pass through the API.
-    storage_backend: Literal["local", "s3"] = "local"
+    # "database" keeps files in Postgres, for hosts without a persistent disk (Vercel).
+    storage_backend: Literal["local", "s3", "database"] = "local"
+    # A direct (unpooled) connection for migrations; Neon on Vercel provides one.
+    database_url_direct: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "ARBA_DATABASE_URL_DIRECT", "DATABASE_URL_UNPOOLED", "POSTGRES_URL_NON_POOLING"
+        ),
+    )
     storage_dir: Path = Path(".storage")
     s3_bucket: str | None = None
     s3_region: str | None = None
@@ -85,16 +97,50 @@ class Settings(BaseSettings):
     # `python -m app.worker` runs (production).
     run_worker_in_api: bool = True
 
+    # Serverless hosting (Vercel): no long-running worker, no disk; the API migrates and
+    # seeds itself on first use, sends urgent notifications right away, and a cron call
+    # (/api/v1/cron/tick, with this secret) does the periodic work.
+    serverless: bool = Field(
+        default=False, validation_alias=AliasChoices("ARBA_SERVERLESS", "VERCEL")
+    )
+    cron_secret: str | None = Field(
+        default=None, validation_alias=AliasChoices("CRON_SECRET", "ARBA_CRON_SECRET")
+    )
+
     # The mail provider calls the inbound webhook with these HTTP Basic credentials.
     inbound_webhook_user: str = "postmark"
     inbound_webhook_password: str = DEV_WEBHOOK_PASSWORD
 
     @model_validator(mode="after")
+    def _serverless_defaults(self) -> "Settings":
+        if not self.serverless:
+            return self
+        explicit = self.model_fields_set
+        if "storage_backend" not in explicit:
+            self.storage_backend = "database"
+        if "run_worker_in_api" not in explicit:
+            self.run_worker_in_api = False
+        if "cookie_secure" not in explicit:
+            self.cookie_secure = True
+        if "whatsapp_provider" not in explicit:
+            self.whatsapp_provider = "disabled"
+        production_host = os.environ.get("VERCEL_PROJECT_PRODUCTION_URL")
+        if "app_url" not in explicit and production_host:
+            self.app_url = f"https://{production_host}"
+        return self
+
+    @model_validator(mode="after")
     def _async_database_driver(self) -> "Settings":
         # Hosts (Railway, Heroku-style) hand out postgres:// URLs; SQLAlchemy needs asyncpg.
-        for prefix in ("postgres://", "postgresql://"):
-            if self.database_url.startswith(prefix):
-                self.database_url = "postgresql+asyncpg://" + self.database_url[len(prefix) :]
+        def asyncpg(url: str) -> str:
+            for prefix in ("postgres://", "postgresql://"):
+                if url.startswith(prefix):
+                    return "postgresql+asyncpg://" + url[len(prefix) :]
+            return url
+
+        self.database_url = asyncpg(self.database_url)
+        if self.database_url_direct:
+            self.database_url_direct = asyncpg(self.database_url_direct)
         return self
 
     @model_validator(mode="after")

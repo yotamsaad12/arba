@@ -116,7 +116,7 @@ scope: up to 100 test users before Google's verification and security assessment
 
 ## Deploying
 
-Web app on Vercel, API and database on Railway: [docs/deploy.md](docs/deploy.md).
+Everything (web app, API, database, files, cron) on Vercel: [docs/deploy.md](docs/deploy.md).
 
 ## Layout
 

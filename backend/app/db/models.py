@@ -738,3 +738,26 @@ class OutboundDraft(IdMixin, TimestampMixin, Base):
     )
     # Where the address came from, shown next to it.
     recipient_source: Mapped[str | None] = mapped_column(sa.String(32))
+
+
+class StoredFile(Base):
+    """File bodies, when the storage backend is the database (serverless hosting)."""
+
+    __tablename__ = "stored_files"
+
+    key: Mapped[str] = mapped_column(sa.String(300), primary_key=True)
+    content_type: Mapped[str] = mapped_column(sa.String(150))
+    size: Mapped[int]
+    data: Mapped[bytes] = mapped_column(sa.LargeBinary)
+    created_at: Mapped[datetime] = mapped_column(
+        sa.DateTime(timezone=True), server_default=sa.func.now()
+    )
+
+
+class AppMeta(Base):
+    """Small facts about the installation, e.g. which reference data was last loaded."""
+
+    __tablename__ = "app_meta"
+
+    key: Mapped[str] = mapped_column(sa.String(64), primary_key=True)
+    value: Mapped[str] = mapped_column(sa.Text)

@@ -122,6 +122,9 @@ async def notify(
             for channel in channels:
                 db.add(Delivery(notification_id=notification.id, channel=channel, due_at=due))
     await db.commit()
+    # Without a worker (serverless), what is due now goes out now; the cron sends the rest.
+    if created and not settings.run_worker_in_api and settings.env != "test":
+        await deliver_due(db, now)
     return created
 
 
