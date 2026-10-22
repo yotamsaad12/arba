@@ -90,6 +90,14 @@ class Settings(BaseSettings):
     inbound_webhook_password: str = DEV_WEBHOOK_PASSWORD
 
     @model_validator(mode="after")
+    def _async_database_driver(self) -> "Settings":
+        # Hosts (Railway, Heroku-style) hand out postgres:// URLs; SQLAlchemy needs asyncpg.
+        for prefix in ("postgres://", "postgresql://"):
+            if self.database_url.startswith(prefix):
+                self.database_url = "postgresql+asyncpg://" + self.database_url[len(prefix) :]
+        return self
+
+    @model_validator(mode="after")
     def _require_real_secrets_outside_dev(self) -> "Settings":
         if self.env not in ("dev", "test"):
             if self.jwt_secret == DEV_JWT_SECRET:

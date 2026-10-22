@@ -73,6 +73,29 @@ checks pass; the last step is the person finding the permit on the committee's o
   only what the body publishes itself, each with its source page and date. Arba also learns
   contacts from mail filed to a requirement (shown as "learned from mail").
 
+### A complete checklist
+
+- **Permit conditions.** After the permit file is checked, Arba reads the conditions written in
+  it (Claude, or numbered-line rules) and proposes for each one a new step or the existing step
+  it belongs to. The person approves; new steps hold up the Form 4 submission.
+- **The authority's own list.** `backend/app/modules/directory/data/form4_lists.yaml` holds
+  what each local authority adds to the base template, from its published sources. Projects
+  get it at creation; `make seed` applies updates to open projects.
+- **Learning from authorities.** When an approved filing is a request for information or a
+  rejection, what the authority asked for joins the step's documents and is recorded in
+  `checklist_feedback` for improving the base template.
+
+### Writing to the authorities
+
+Arba drafts requests to the approving bodies (committee, water corporation, fire and rescue,
+Home Front Command) once the permit checks out, and reminders after 7 days without an answer;
+after 3 reminders it suggests calling. Nothing is sent without the person's approval (in the
+app or with the WhatsApp button). Mail goes out from Arba with the project inbox as Reply-To,
+so answers land in the project's conversation, and the person is copied. Bodies that take
+requests only on their website get the text ready to paste. With
+`ARBA_EMAIL_ALLOWED_RECIPIENTS` set (dev with a real mail server), letters go to the first
+allowed address instead of the authority, marked as a test.
+
 ### Projects already under way
 
 When a project started before Arba, the person says which stage it is at; Arba marks the
@@ -90,6 +113,10 @@ In dev the scan runs against a simulated mailbox. For Gmail set `ARBA_GOOGLE_CLI
 `ARBA_GOOGLE_CLIENT_SECRET` (a Google Cloud OAuth web client with the Gmail API enabled and
 `<app_url>/api/v1/mailbox/google/callback` as redirect URI). `gmail.readonly` is a restricted
 scope: up to 100 test users before Google's verification and security assessment.
+
+## Deploying
+
+Web app on Vercel, API and database on Railway: [docs/deploy.md](docs/deploy.md).
 
 ## Layout
 

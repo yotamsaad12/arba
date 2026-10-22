@@ -40,6 +40,7 @@ include = ["app*"]
 
 [tool.setuptools.package-data]
 "app.modules.templates" = ["data/*.yaml"]
+"app.modules.directory" = ["data/*.yaml", "data/*.json"]
 
 [tool.ruff]
 line-length = 100
