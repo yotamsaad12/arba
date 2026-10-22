@@ -21,7 +21,11 @@ from sqlalchemy import text  # noqa: E402
 from app.db.base import Base  # noqa: E402
 from app.db.session import SessionLocal, engine  # noqa: E402
 from app.main import app  # noqa: E402
-from app.modules.directory.reference import load_reference  # noqa: E402
+from app.modules.directory.reference import (  # noqa: E402
+    load_contacts,
+    load_reference,
+    reference_matcher,
+)
 from app.modules.templates.loader import seed_templates  # noqa: E402
 
 # Loaded once per run and kept: checklist templates and official reference data.
@@ -50,6 +54,10 @@ async def _clean() -> AsyncIterator[None]:
     yield
     async with engine.begin() as conn:
         await conn.execute(text(f"TRUNCATE {', '.join(_PER_TEST_TABLES)} CASCADE"))
+    # Contacts reference projects, so the truncate empties them; put the official ones back.
+    async with SessionLocal() as db:
+        await load_contacts(db, reference_matcher())
+        await db.commit()
 
 
 @pytest.fixture

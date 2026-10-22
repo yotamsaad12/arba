@@ -12,6 +12,8 @@ import { CatchUpEntry } from "./Import";
 import { DocumentsView } from "../project/DocumentsView";
 import { InboxView } from "../project/InboxView";
 import { AuthoritiesPanel, PermitBanner } from "../project/PermitPanel";
+import { ConditionsCard } from "../project/ConditionsCard";
+import { DraftsPanel } from "../project/DraftsPanel";
 import { RequirementCard } from "../project/RequirementCard";
 import { ApprovalsPanel } from "../project/SuggestionCard";
 import { STAGE_ICON, isStageKey, sceneModel } from "../scene/model";
@@ -126,6 +128,7 @@ export function ProjectPage() {
           {tab === "now" && (
             <div className="space-y-8">
               <PermitBanner projectId={projectId} permit={p.permit} canEdit={canEdit} />
+              <ConditionsCard projectId={projectId} canEdit={canEdit} />
               {canEdit && <CatchUpEntry projectId={projectId} />}
               {requirements.data && (
                 <ApprovalsPanel
@@ -136,6 +139,7 @@ export function ProjectPage() {
                   canEdit={canEdit}
                 />
               )}
+              <DraftsPanel projectId={projectId} canEdit={canEdit} />
               {steps.data ? (
                 <NextStepsView projectId={projectId} steps={steps.data} titles={titles} canEdit={canEdit} />
               ) : (

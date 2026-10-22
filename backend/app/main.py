@@ -14,6 +14,7 @@ from app.api.v1 import (
     documents,
     inbox,
     me,
+    outreach,
     permits,
     projects,
     storage,
@@ -70,6 +71,7 @@ def create_app() -> FastAPI:
     v1.include_router(permits.router)
     v1.include_router(directory.router)
     v1.include_router(catchup.router)
+    v1.include_router(outreach.router)
     v1.include_router(catchup.callbacks)
     v1.include_router(storage.router)
     v1.include_router(webhooks.router)

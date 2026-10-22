@@ -75,6 +75,8 @@ class AuthorityType(StrEnum):
     green_building_lab = "green_building_lab"
     contractor = "contractor"
     owner = "owner"
+    # The permit applicant's architect (עורך הבקשה), who signs the completion declaration.
+    architect = "architect"
 
 
 class DocumentSource(StrEnum):
@@ -128,6 +130,8 @@ class NotificationKind(StrEnum):
     whatsapp_connected = "whatsapp_connected"
     # A mailbox scan of an existing project finished.
     import_finished = "import_finished"
+    # Arba wrote a request or reminder to an authority; it waits for the person's approval.
+    draft_ready = "draft_ready"
     # Sent from Settings to check that email and WhatsApp reach the person.
     test = "test"
 
@@ -184,3 +188,34 @@ class ScanStatus(StrEnum):
     running = "running"
     done = "done"
     failed = "failed"
+
+
+class RequirementOrigin(StrEnum):
+    template = "template"
+    # A condition written in the project's building permit.
+    permit_condition = "permit_condition"
+    # The local authority's own Form 4 list.
+    city_list = "city_list"
+
+
+class ConditionTiming(StrEnum):
+    before_work = "before_work"
+    during_work = "during_work"
+    before_form4 = "before_form4"
+
+
+class ConditionStatus(StrEnum):
+    proposed = "proposed"
+    accepted = "accepted"
+    ignored = "ignored"
+
+
+class DraftKind(StrEnum):
+    request = "request"
+    reminder = "reminder"
+
+
+class DraftStatus(StrEnum):
+    draft = "draft"
+    sent = "sent"
+    discarded = "discarded"

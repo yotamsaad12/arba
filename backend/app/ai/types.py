@@ -52,6 +52,8 @@ class Decision:
     reason: str
     confidence: float
     source: Literal["claude", "rules"]
+    # Requests for information and rejections: what the authority asks for.
+    missing_documents: list[str] = field(default_factory=list)
     model: str | None = None
     input_tokens: int | None = None
     output_tokens: int | None = None

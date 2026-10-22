@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from app.core.enums import PermitStatus
+from app.core.enums import AuthorityType, ConditionStatus, ConditionTiming, PermitStatus
 from app.modules.directory.schemas import LocalityOut
 
 
@@ -60,3 +60,33 @@ class PermitUpdate(BaseModel):
     permit_issue_date: date | None = None
     permit_valid_until: date | None = None
     permit_committee: str | None = None
+
+
+class ConditionOut(BaseModel):
+    id: uuid.UUID
+    number: str | None
+    text: str
+    title: str
+    timing: ConditionTiming
+    stage: str
+    authority_type: AuthorityType
+    documents: list[str]
+    status: ConditionStatus
+    # Arba's proposal: add to this existing step (null: a new step).
+    match_requirement_id: uuid.UUID | None
+    # Where it ended up, once accepted.
+    requirement_id: uuid.UUID | None
+    # The title of the step it was matched to or ended up in.
+    requirement_title: str | None
+    source: str
+
+
+class ConditionsOut(BaseModel):
+    # null (no permit file yet), reading, ready, failed.
+    status: str | None
+    conditions: list[ConditionOut]
+
+
+class AcceptCondition(BaseModel):
+    # Make it a step of its own even though Arba proposed an existing one.
+    as_new: bool = False

@@ -1,4 +1,5 @@
-"""Background worker: sends due notifications and builds the morning summaries.
+"""Background worker: sends due notifications, builds the morning summaries, and drafts
+requests and reminders to authorities.
 
 Production: run `python -m app.worker` as its own process (any number of copies; deliveries are
 claimed with SKIP LOCKED). Dev: it runs inside the API process (settings.run_worker_in_api).
@@ -6,20 +7,30 @@ claimed with SKIP LOCKED). Dev: it runs inside the API process (settings.run_wor
 
 import asyncio
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from app.db.session import SessionLocal
 from app.modules.notifications.digest import build_digests
 from app.modules.notifications.service import BATCH_SIZE, deliver_due
+from app.modules.outreach.service import prepare_reminders, prepare_requests
 
 log = logging.getLogger(__name__)
 INTERVAL_SECONDS = 10
+# Drafting requests and reminders needs no second-by-second precision.
+OUTREACH_EVERY = timedelta(minutes=5)
+_last_outreach: datetime | None = None
 
 
 async def tick(now: datetime | None = None) -> None:
     now = now or datetime.now(UTC)
     async with SessionLocal() as db:
         await build_digests(db, now)
+    global _last_outreach
+    if _last_outreach is None or now - _last_outreach >= OUTREACH_EVERY:
+        _last_outreach = now
+        async with SessionLocal() as db:
+            await prepare_requests(db)
+            await prepare_reminders(db, now)
     async with SessionLocal() as db:
         while await deliver_due(db, now) == BATCH_SIZE:  # a full batch: there may be more
             pass

@@ -98,6 +98,7 @@ def _requirement_out(
         blocked_by=result.blocked_by[r.id],
         on_critical_path=r.id in critical,
         document_count=documents.get(r.id, 0),
+        origin=r.origin,
     )
 
 

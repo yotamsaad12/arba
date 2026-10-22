@@ -1,6 +1,13 @@
 # תבנית: בית פרטי, מהיתר ועד טופס 4.
 # מבוססת על מקורות ציבוריים. יש לאמת מול מהנדס ומול הרשות המקומית לפני שימוש.
 #
+# גרסה 2 (2026-10-23): נוספו ההצהרות לתעודת גמר לפי תקנה 95 לתקנות התכנון והבנייה
+# (רישוי בנייה), התשע"ו-2016 (טפסים ה-1, ה-2, ה-3, ה-5, ה-7), שטיפה וחיטוי של מערכת המים,
+# אישור פינוי פסולת, ופירוט בדיקות הממ"ד. מקורות:
+#   טופס ה-7, הוועדה המקומית ירוחם:
+#     https://handasa.yeroham.muni.il/wp-content/uploads/2026/06/ה-7-אחראי-לביקורת-על-הביצוע-בקשה-לקבלת-תעודת-גמר-עד-6-יחד.pdf
+#   טופס 4 לבית פרטי, מועצה אזורית מטה בנימין: https://www.binyamin.org.il/7507/
+#
 # שדות לכל דרישה:
 #   key            מזהה קבוע (באנגלית). משמש לתלויות.
 #   authority      סוג הגורם המאשר (ראו AuthorityType).
@@ -13,7 +20,7 @@
 #   gate           הצעד האחרון: הגשת הבקשה לטופס 4.
 
 key: private_house
-version: 1
+version: 2
 name: בית פרטי
 description: מהיתר הבנייה ועד טופס 4, לבעלי בית שבונים מול קבלן.
 client_type: private
@@ -229,7 +236,11 @@ requirements:
     authority: home_front_command
     channel: portal
     days: 14
-    documents: [אישור ממ"ד]
+    documents:
+      - אישור ממ"ד
+      - דוח התקנת דלת וחלון ואישור תו תקן
+      - דוח התקנת מערכת אוורור וסינון
+      - ריכוז תעודות בטון של הממ"ד
     depends_on: [mamad_openings]
 
   # --- מעטפת ואיטום ---
@@ -304,8 +315,28 @@ requirements:
     authority: surveyor
     channel: email
     days: 7
-    documents: [מפת עדות]
+    description: מפת עדות (AS MADE) חתומה בידי מודד מוסמך, בתוקף של עד שנה, בקובצי PDF ו-DWG.
+    documents: [מפת עדות (AS MADE), קובץ DWG]
     depends_on: [close_walls, waterproofing]
+
+  - key: water_disinfection
+    stage: finish
+    title: שטיפה וחיטוי של מערכת המים
+    description: על ידי מורשה של משרד הבריאות, אחרי שהצנרת הושלמה.
+    authority: plumber
+    channel: email
+    days: 3
+    documents: [אישור שטיפה וחיטוי]
+    depends_on: [plumbing_pressure]
+
+  - key: waste_disposal
+    stage: finish
+    title: פינוי פסולת בנייה ועודפי עפר לאתר מורשה
+    authority: contractor
+    channel: email
+    days: 5
+    documents: [אישור הטמנה ופינוי פסולת]
+    depends_on: [close_walls]
 
   - key: home_inspection
     stage: finish
@@ -384,7 +415,7 @@ requirements:
     authority: testing_lab
     channel: email
     days: 10
-    documents: [אישור מכון התקנים או מעבדה מוסמכת]
+    documents: [בדיקת אטימות ממ"ד ממעבדה מאושרת, בדיקת ציפויים וטיח ממעבדה מאושרת]
     depends_on: [waterproofing, mamad_approval]
 
   - key: concrete_cert
@@ -396,14 +427,65 @@ requirements:
     documents: [ריכוז תוצאות מעבדה]
     depends_on: [foundation_pour, pour]
 
+  - key: architect_declaration
+    stage: form4
+    title: הצהרת עורך הבקשה (טופס ה-1)
+    description: האדריכל שהגיש את הבקשה להיתר מצהיר שהבנייה תואמת להיתר.
+    authority: architect
+    channel: email
+    days: 7
+    documents: [טופס ה-1 חתום]
+    depends_on: [as_built]
+
+  - key: structure_declaration
+    stage: form4
+    title: הצהרת מתכנן השלד (טופס ה-2)
+    authority: structural_engineer
+    channel: email
+    days: 7
+    documents: [טופס ה-2 חתום, תוכניות קונסטרוקציה סופיות]
+    depends_on: [concrete_cert]
+
+  - key: consultants_declaration
+    stage: form4
+    title: הצהרות היועצים (טופס ה-3)
+    description: כל יועץ שחתם על ההיתר בתחומו, למשל בטיחות אש או אינסטלציה. לא רלוונטי אם לא היו יועצים נוספים.
+    authority: architect
+    channel: email
+    days: 7
+    optional: true
+    documents: [טופס ה-3 מכל יועץ]
+    depends_on: [as_built]
+
+  - key: contractor_declaration
+    stage: form4
+    title: הצהרת הקבלן הרשום (טופס ה-5)
+    description: הקבלן שבנה את השלד מצהיר על כך, עם תעודת קבלן רשום בתוקף.
+    authority: contractor
+    channel: email
+    days: 5
+    documents: [טופס ה-5 חתום, תעודת קבלן רשום בתוקף]
+    depends_on: [concrete_cert]
+
   - key: engineer_declaration
     stage: form4
-    title: הצהרת המהנדס האחראי
+    title: בקשה והצהרת האחראי לביקורת על הביצוע (טופס ה-7)
+    description: האחראי לביקורת על הביצוע מבקש את תעודת הגמר ומצהיר שהבנייה הושלמה לפי ההיתר.
     authority: supervising_engineer
     channel: email
     days: 7
-    documents: [הצהרת מהנדס]
-    depends_on: [concrete_cert, protected_waterproofing, electrical, gas, as_built]
+    documents: [טופס ה-7 חתום]
+    depends_on:
+      - concrete_cert
+      - protected_waterproofing
+      - electrical
+      - gas
+      - as_built
+      - architect_declaration
+      - structure_declaration
+      - consultants_declaration
+      - contractor_declaration
+      - water_disinfection
 
   - key: municipal
     stage: form4
@@ -416,7 +498,7 @@ requirements:
   - key: form4_submit
     stage: form4
     title: הגשת הבקשה לטופס 4 לוועדה המקומית
-    description: בבית פרטי, בעל המקרקעין מגיש את הבקשה, לא הקבלן.
+    description: בבית פרטי, בעל המקרקעין מגיש את הבקשה, לא הקבלן. אחרי ההגשה מפקח הוועדה מבקר בנכס.
     authority: owner
     channel: in_person
     days: 30
@@ -432,3 +514,4 @@ requirements:
       - municipal
       - green_final
       - defects
+      - waste_disposal

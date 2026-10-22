@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.enums import AuthorityType, Channel, RequirementOrigin
 from app.core.enums import RequirementStatus as S
 from app.core.errors import AppError
 from app.db.models import AuditLog, Dependency, Project, Requirement, User
@@ -99,3 +100,56 @@ async def change_status(
     )
     apply_automatic_statuses(requirements, run_engine(requirements, deps))
     await db.commit()
+
+
+async def add_requirement(
+    db: AsyncSession,
+    project: Project,
+    *,
+    stage: str,
+    title: str,
+    description: str | None,
+    authority_type: AuthorityType,
+    documents: list[str],
+    origin: RequirementOrigin,
+    origin_ref: str,
+    after: list[uuid.UUID] | None = None,
+    optional: bool = False,
+) -> Requirement:
+    """Adds a step that isn't in the template (a permit condition, a city's own requirement).
+
+    It comes after `after` and before the Form 4 submission, which now waits for it too.
+    Flushes; the caller commits.
+    """
+    requirements, deps = await load_graph(db, project.id)
+    in_stage = [r.order for r in requirements if r.stage == stage]
+    requirement = Requirement(
+        id=uuid.uuid4(),
+        project_id=project.id,
+        stage=stage,
+        title=title[:300],
+        description=description,
+        authority_type=authority_type,
+        channel=Channel.email,
+        estimated_days=7,
+        required_documents=documents,
+        optional=optional,
+        order=max(in_stage, default=max((r.order for r in requirements), default=0)) + 1,
+        status=S.not_started,
+        origin=origin,
+        origin_ref=origin_ref,
+    )
+    db.add(requirement)
+    await db.flush()
+    new_deps = [Dependency(requirement_id=requirement.id, depends_on_id=p) for p in after or []]
+    gates = [r for r in requirements if r.is_form4_gate]
+    new_deps += [Dependency(requirement_id=g.id, depends_on_id=requirement.id) for g in gates]
+    db.add_all(new_deps)
+    await db.flush()
+
+    requirements.append(requirement)
+    deps[requirement.id] = list(after or [])
+    for g in gates:
+        deps[g.id].append(requirement.id)
+    apply_automatic_statuses(requirements, run_engine(requirements, deps))
+    return requirement

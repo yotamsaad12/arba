@@ -148,4 +148,21 @@ def classify(item: Item, requirements: Iterable[RequirementInfo]) -> Decision:
         reason=reason,
         confidence=round(min(0.85, 0.3 + score * 0.07), 2),
         source="rules",
+        missing_documents=asked_for(item.text) if kind == MessageKind.request_for_info else [],
     )
+
+
+_ASKS = re.compile(
+    r"(?:יש להשלים|יש להמציא|נא להמציא|נא להשלים|נדרשת?|חסרה?|חסרים)\s*:?\s*([^.\n]{4,120})"
+)
+
+
+def asked_for(text: str) -> list[str]:
+    """What an authority's request names: "יש להשלים תוכנית אינסטלציה חתומה" -> that document."""
+    found = []
+    for match in _ASKS.finditer(text or ""):
+        for part in re.split(r",|;| ו(?=[א-ת])", match.group(1)):
+            part = re.sub(r"^(?:את|גם)\s+", "", part.strip(" -:"))
+            if len(part) >= 4:
+                found.append(part)
+    return list(dict.fromkeys(found))[:10]

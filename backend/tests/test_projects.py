@@ -4,7 +4,7 @@ from httpx import AsyncClient
 
 from tests.conftest import auth, register
 
-TEMPLATE_REQUIREMENTS = 39
+TEMPLATE_REQUIREMENTS = 45
 PER_FLOOR_REQUIREMENTS = 5  # formwork, sleeves, rebar, photos, pour
 
 

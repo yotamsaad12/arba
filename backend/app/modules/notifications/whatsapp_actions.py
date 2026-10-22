@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.enums import ProjectRole, SuggestionStatus
+from app.core.enums import DraftStatus, ProjectRole, SuggestionStatus
 from app.core.errors import AppError
 from app.db.models import Requirement, Suggestion, User
 from app.modules.notifications.service import record_status
@@ -69,11 +69,14 @@ async def _button(db: AsyncSession, user: User, payload: str) -> str:
     kind, _, rest = payload.partition(":")
     raw_id, _, action = rest.partition(":")
     try:
-        suggestion_id = uuid.UUID(raw_id)
+        target_id = uuid.UUID(raw_id)
     except ValueError:
         return ""
+    if kind == "dr":
+        return await _draft_button(db, user, target_id, action)
     if kind != "sg":
         return ""
+    suggestion_id = target_id
     suggestion = await db.get(Suggestion, suggestion_id)
     if suggestion is None:
         return "ההצעה הזו כבר לא קיימת."
@@ -105,6 +108,33 @@ async def _button(db: AsyncSession, user: User, payload: str) -> str:
         reason = STATUS_ERRORS.get(result.status_error, "הסטטוס לא השתנה")
         return f'✅ תויק תחת "{title}". הסטטוס לא עודכן: {reason}.'
     return f'✅ תויק תחת "{title}".'
+
+
+async def _draft_button(db: AsyncSession, user: User, draft_id: uuid.UUID, action: str) -> str:
+    from app.core.storage import get_storage
+    from app.db.models import OutboundDraft
+    from app.modules.outreach import service as outreach
+
+    draft = await db.get(OutboundDraft, draft_id)
+    if draft is None:
+        return "הפנייה הזו כבר לא קיימת."
+    try:
+        project, _ = await get_project_for_user(db, draft.project_id, user, ProjectRole.manager)
+    except AppError:
+        return "אין לך הרשאה לשלוח בפרויקט הזה."
+    if action != "s":
+        return f"אפשר לערוך את הנוסח כאן: {settings.app_url}/projects/{project.id}#drafts"
+    if draft.status != DraftStatus.draft:
+        return "✔️ זה כבר טופל, אין צורך לעשות כלום."
+    try:
+        await outreach.send_draft(db, get_storage(), project, user, draft.id)
+    except AppError as exc:
+        link = f"{settings.app_url}/projects/{project.id}#drafts"
+        if exc.code == "recipient_required":
+            return f"חסרה כתובת מייל של הגורם. אפשר להוסיף אותה כאן: {link}"
+        return f"לא נשלח ({exc.code}). אפשר לנסות מהאפליקציה: {link}"
+    to = draft.to_name or draft.to_email
+    return f"📨 נשלח ל{to}. התשובה תגיע לתיק הפרויקט ו-Arba תעדכן אותך."
 
 
 async def _text(db: AsyncSession, user: User, text: str, now: datetime) -> str:

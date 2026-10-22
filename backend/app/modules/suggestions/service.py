@@ -12,11 +12,12 @@ from sqlalchemy.orm import selectinload
 from app.ai import rules
 from app.ai.types import Attachment, Decision, Item, RequirementInfo
 from app.core.config import settings
-from app.core.enums import DocumentStatus, RequirementStatus, SuggestionStatus
+from app.core.enums import DocumentStatus, MessageKind, RequirementStatus, SuggestionStatus
 from app.core.errors import AppError, not_found
 from app.core.storage import Storage
 from app.db.models import (
     AuditLog,
+    ChecklistFeedback,
     Document,
     Message,
     Project,
@@ -129,6 +130,7 @@ def _record(decision: Decision, **target: object) -> Suggestion:
         reason=decision.reason,
         confidence=decision.confidence,
         source=decision.source,
+        missing_documents=decision.missing_documents,
         model=decision.model,
         input_tokens=decision.input_tokens,
         output_tokens=decision.output_tokens,
@@ -260,6 +262,7 @@ async def list_pending(db: AsyncSession, project_id: uuid.UUID) -> list[Suggesti
                 reason=s.reason,
                 confidence=s.confidence,
                 source=s.source,
+                missing_documents=s.missing_documents,
                 created_at=s.created_at,
             )
         )
@@ -309,6 +312,8 @@ async def accept(
     elif suggestion.document_id:
         await documents.file_document(db, project, user, suggestion.document_id, target)
 
+    await _learn(db, project, suggestion, target)
+
     applied, error = False, None
     if data.apply_status and new_status:
         requirement = await db.get(Requirement, target)
@@ -339,6 +344,35 @@ async def accept(
     )
     await db.commit()
     return AcceptResult(requirement_id=target, status_applied=applied, status_error=error)
+
+
+async def _learn(
+    db: AsyncSession, project: Project, suggestion: Suggestion, requirement_id: uuid.UUID
+) -> None:
+    """An authority asked for something: the step now lists it, and the case is kept to
+    improve the base checklist for every project."""
+    if suggestion.kind not in (MessageKind.request_for_info, MessageKind.rejection):
+        return
+    requirement = await db.get(Requirement, requirement_id)
+    if requirement is None:
+        return
+    known = {d.strip() for d in requirement.required_documents}
+    new = [d for d in suggestion.missing_documents if d.strip() not in known]
+    if new:
+        requirement.required_documents = [*requirement.required_documents, *new]
+    db.add(
+        ChecklistFeedback(
+            project_id=project.id,
+            requirement_id=requirement.id,
+            template_requirement_id=requirement.template_requirement_id,
+            authority_type=requirement.authority_type,
+            municipality_code=project.municipality_code,
+            kind=suggestion.kind,
+            summary=suggestion.summary,
+            new_documents=new,
+            suggestion_id=suggestion.id,
+        )
+    )
 
 
 async def accept_all(

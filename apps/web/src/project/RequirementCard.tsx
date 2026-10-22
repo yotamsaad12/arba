@@ -11,6 +11,9 @@ import { useErrorMessage } from "../lib/useErrorMessage";
 import { UploadProgress } from "./DocumentsView";
 import { useUploads } from "./useUploads";
 
+// The approving bodies Arba writes to (mirrors WRITES_TO in backend/app/modules/outreach).
+const WRITES_TO = new Set(["municipality", "water_corporation", "fire_department", "home_front_command"]);
+
 interface Props {
   projectId: string;
   requirement: Requirement;
@@ -42,6 +45,14 @@ export function RequirementCard({
     "/api/v1/projects/{project_id}/requirements/{requirement_id}/status",
     { onSuccess: () => invalidateProjects() },
   );
+
+  const write = $api.useMutation("post", "/api/v1/projects/{project_id}/requirements/{requirement_id}/drafts", {
+    onSuccess: async () => {
+      await invalidateProjects();
+      document.getElementById("drafts")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    },
+  });
+  const canWrite = canEdit && WRITES_TO.has(r.authority_type) && !["done", "not_applicable"].includes(r.status);
 
   const uploads = useUploads(projectId);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -99,6 +110,7 @@ export function RequirementCard({
           <Badge tone={STATUS_TONE[status]}>{t(`status.${status}`)}</Badge>
           {r.on_critical_path && <Badge tone="warning">⚡ {t("requirement.criticalPath")}</Badge>}
           {r.optional && <Badge>{t("requirement.optional")}</Badge>}
+          {r.origin !== "template" && <Badge tone="info">📜 {t(`origin.${r.origin}`)}</Badge>}
           {r.document_count > 0 && (
             <Badge tone="success">📎 {t("documents.count", { count: r.document_count })}</Badge>
           )}
@@ -137,6 +149,7 @@ export function RequirementCard({
       )}
 
       {update.error && <Alert>{message(update.error)}</Alert>}
+      {write.error && <Alert>{message(write.error)}</Alert>}
       <UploadProgress items={uploads.items} />
 
       {(actions.length > 0 || canEdit) && (
@@ -163,6 +176,21 @@ export function RequirementCard({
               >
                 📎 {t("documents.attach")}
               </Button>
+              {canWrite && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={write.isPending}
+                  onClick={() =>
+                    write.mutate({
+                      params: { path: { project_id: projectId, requirement_id: r.id } },
+                      body: { kind: "request" },
+                    })
+                  }
+                >
+                  ✉️ {write.isPending ? t("drafts.writing") : t("drafts.write")}
+                </Button>
+              )}
               <input
                 ref={fileInput}
                 type="file"

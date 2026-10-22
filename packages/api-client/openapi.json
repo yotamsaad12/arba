@@ -1518,7 +1518,7 @@
           "permits"
         ],
         "summary": "Check Permit",
-        "description": "Re-runs the checks, e.g. after the permit file was uploaded.",
+        "description": "Re-runs the checks, e.g. after the permit file was uploaded. The first time there is a\npermit file, Arba also starts reading its conditions.",
         "operationId": "permits_check_permit",
         "security": [
           {
@@ -1593,6 +1593,278 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PermitOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/permit/conditions": {
+      "get": {
+        "tags": [
+          "permits"
+        ],
+        "summary": "List Conditions",
+        "description": "The permit's conditions, with Arba's proposal for each.",
+        "operationId": "permits_list_conditions",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConditionsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/permit/conditions/read": {
+      "post": {
+        "tags": [
+          "permits"
+        ],
+        "summary": "Read Conditions",
+        "description": "Reads the conditions again, e.g. after a new permit file.",
+        "operationId": "permits_read_conditions",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConditionsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/permit/conditions/accept-all": {
+      "post": {
+        "tags": [
+          "permits"
+        ],
+        "summary": "Accept All Conditions",
+        "operationId": "permits_accept_all_conditions",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConditionsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/permit/conditions/{condition_id}/accept": {
+      "post": {
+        "tags": [
+          "permits"
+        ],
+        "summary": "Accept Condition",
+        "operationId": "permits_accept_condition",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "condition_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Condition Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptCondition"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConditionsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/permit/conditions/{condition_id}/ignore": {
+      "post": {
+        "tags": [
+          "permits"
+        ],
+        "summary": "Ignore Condition",
+        "operationId": "permits_ignore_condition",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "condition_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Condition Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConditionsOut"
                 }
               }
             }
@@ -1965,6 +2237,365 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/drafts": {
+      "get": {
+        "tags": [
+          "outreach"
+        ],
+        "summary": "List Drafts",
+        "description": "Requests and reminders Arba wrote, waiting for approval.",
+        "operationId": "outreach_list_drafts",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DraftOut"
+                  },
+                  "title": "Response Outreach List Drafts"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/requirements/{requirement_id}/drafts": {
+      "post": {
+        "tags": [
+          "outreach"
+        ],
+        "summary": "Create Draft",
+        "description": "Arba writes to the body responsible for this step (or returns the draft already open).",
+        "operationId": "outreach_create_draft",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "requirement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Requirement Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/drafts/{draft_id}": {
+      "patch": {
+        "tags": [
+          "outreach"
+        ],
+        "summary": "Update Draft",
+        "operationId": "outreach_update_draft",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "draft_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Draft Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/drafts/{draft_id}/send": {
+      "post": {
+        "tags": [
+          "outreach"
+        ],
+        "summary": "Send Draft",
+        "description": "Sends the email. Replies come back to the project inbox.",
+        "operationId": "outreach_send_draft",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "draft_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Draft Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/drafts/{draft_id}/submitted": {
+      "post": {
+        "tags": [
+          "outreach"
+        ],
+        "summary": "Mark Submitted",
+        "description": "The person submitted the text on the body's website or at its counter.",
+        "operationId": "outreach_mark_submitted",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "draft_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Draft Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/drafts/{draft_id}/discard": {
+      "post": {
+        "tags": [
+          "outreach"
+        ],
+        "summary": "Discard Draft",
+        "operationId": "outreach_discard_draft",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "draft_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Draft Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",
@@ -2487,6 +3118,17 @@
         ],
         "title": "AcceptAllResult"
       },
+      "AcceptCondition": {
+        "properties": {
+          "as_new": {
+            "type": "boolean",
+            "title": "As New",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "AcceptCondition"
+      },
       "AcceptResult": {
         "properties": {
           "requirement_id": {
@@ -2540,6 +3182,25 @@
         },
         "type": "object",
         "title": "AcceptSuggestion"
+      },
+      "AttachmentOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "file_name": {
+            "type": "string",
+            "title": "File Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "file_name"
+        ],
+        "title": "AttachmentOut"
       },
       "AuthorityOut": {
         "properties": {
@@ -2618,7 +3279,8 @@
           "plumber",
           "green_building_lab",
           "contractor",
-          "owner"
+          "owner",
+          "architect"
         ],
         "title": "AuthorityType"
       },
@@ -2791,6 +3453,156 @@
           "phone"
         ],
         "title": "CodeSent"
+      },
+      "ConditionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "timing": {
+            "$ref": "#/components/schemas/ConditionTiming"
+          },
+          "stage": {
+            "type": "string",
+            "title": "Stage"
+          },
+          "authority_type": {
+            "$ref": "#/components/schemas/AuthorityType"
+          },
+          "documents": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Documents"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ConditionStatus"
+          },
+          "match_requirement_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Requirement Id"
+          },
+          "requirement_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requirement Id"
+          },
+          "requirement_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requirement Title"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "number",
+          "text",
+          "title",
+          "timing",
+          "stage",
+          "authority_type",
+          "documents",
+          "status",
+          "match_requirement_id",
+          "requirement_id",
+          "requirement_title",
+          "source"
+        ],
+        "title": "ConditionOut"
+      },
+      "ConditionStatus": {
+        "type": "string",
+        "enum": [
+          "proposed",
+          "accepted",
+          "ignored"
+        ],
+        "title": "ConditionStatus"
+      },
+      "ConditionTiming": {
+        "type": "string",
+        "enum": [
+          "before_work",
+          "during_work",
+          "before_form4"
+        ],
+        "title": "ConditionTiming"
+      },
+      "ConditionsOut": {
+        "properties": {
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "conditions": {
+            "items": {
+              "$ref": "#/components/schemas/ConditionOut"
+            },
+            "type": "array",
+            "title": "Conditions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "conditions"
+        ],
+        "title": "ConditionsOut"
       },
       "ConfirmWhatsApp": {
         "properties": {
@@ -3062,6 +3874,229 @@
           "email"
         ],
         "title": "DocumentSource"
+      },
+      "DraftKind": {
+        "type": "string",
+        "enum": [
+          "request",
+          "reminder"
+        ],
+        "title": "DraftKind"
+      },
+      "DraftOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "requirement_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Requirement Id"
+          },
+          "requirement_title": {
+            "type": "string",
+            "title": "Requirement Title"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DraftKind"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/Channel"
+          },
+          "to_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To Email"
+          },
+          "to_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To Name"
+          },
+          "portal_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Portal Url"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "recipient_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient Source"
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/AttachmentOut"
+            },
+            "type": "array",
+            "title": "Attachments"
+          },
+          "missing_documents": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missing Documents"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DraftStatus"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "requirement_id",
+          "requirement_title",
+          "kind",
+          "channel",
+          "to_email",
+          "to_name",
+          "portal_url",
+          "phone",
+          "recipient_source",
+          "subject",
+          "body",
+          "attachments",
+          "missing_documents",
+          "status",
+          "source",
+          "created_at",
+          "sent_at"
+        ],
+        "title": "DraftOut"
+      },
+      "DraftStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "sent",
+          "discarded"
+        ],
+        "title": "DraftStatus"
+      },
+      "DraftUpdate": {
+        "properties": {
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 300,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject"
+          },
+          "body": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20000,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body"
+          },
+          "to_email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "email"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To Email"
+          },
+          "attachment_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attachment Ids"
+          }
+        },
+        "type": "object",
+        "title": "DraftUpdate"
       },
       "FileDocument": {
         "properties": {
@@ -3437,6 +4472,16 @@
         ],
         "title": "MessageOut"
       },
+      "NewDraft": {
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/DraftKind",
+            "default": "request"
+          }
+        },
+        "type": "object",
+        "title": "NewDraft"
+      },
       "NextSteps": {
         "properties": {
           "ready": {
@@ -3493,6 +4538,7 @@
           "daily_digest",
           "whatsapp_connected",
           "import_finished",
+          "draft_ready",
           "test"
         ],
         "title": "NotificationKind"
@@ -4714,6 +5760,15 @@
         ],
         "title": "RequirementList"
       },
+      "RequirementOrigin": {
+        "type": "string",
+        "enum": [
+          "template",
+          "permit_condition",
+          "city_list"
+        ],
+        "title": "RequirementOrigin"
+      },
       "RequirementOut": {
         "properties": {
           "id": {
@@ -4830,6 +5885,9 @@
           "document_count": {
             "type": "integer",
             "title": "Document Count"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/RequirementOrigin"
           }
         },
         "type": "object",
@@ -4852,7 +5910,8 @@
           "depends_on",
           "blocked_by",
           "on_critical_path",
-          "document_count"
+          "document_count",
+          "origin"
         ],
         "title": "RequirementOut"
       },
@@ -5409,6 +6468,13 @@
             "type": "string",
             "title": "Source"
           },
+          "missing_documents": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missing Documents"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -5433,6 +6499,7 @@
           "reason",
           "confidence",
           "source",
+          "missing_documents",
           "created_at"
         ],
         "title": "SuggestionOut"

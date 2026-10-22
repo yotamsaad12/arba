@@ -25,6 +25,8 @@ class SuggestionOut(BaseModel):
     reason: str
     confidence: float
     source: str
+    # What the authority asks for (requests for information and rejections).
+    missing_documents: list[str]
     created_at: datetime
 
 

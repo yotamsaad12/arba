@@ -95,12 +95,38 @@
       source_url: https://www.ashdod.muni.il/
       verified_at: 2026-10-22
 
+- committee: ירוחם
+  website: https://handasa.yeroham.muni.il/
+  contacts:
+    - purpose: הגשת מסמכים לתעודת גמר (מפת עדות, תוכניות)
+      channel: email
+      email: sapirb@ylc.org.il
+      source_url: https://handasa.yeroham.muni.il/wp-content/uploads/2026/06/ה-7-אחראי-לביקורת-על-הביצוע-בקשה-לקבלת-תעודת-גמר-עד-6-יחד.pdf
+      verified_at: 2026-10-23
+    - purpose: פיקוח רישוי (תיאום ביקורת בנכס)
+      channel: email
+      email: daryal@ylc.org.il
+      source_url: https://handasa.yeroham.muni.il/wp-content/uploads/2026/06/ה-7-אחראי-לביקורת-על-הביצוע-בקשה-לקבלת-תעודת-גמר-עד-6-יחד.pdf
+      verified_at: 2026-10-23
+
 # --- Water corporations ---------------------------------------------------------------
 
 - type: water_corporation
   name: מי רעננה
   website: https://mei-raanana.co.il
   areas: [רעננה]
+
+- type: water_corporation
+  name: מעיינות הדרום
+  areas: [ירוחם]
+  contacts:
+    - purpose: אישור תאגיד המים לתעודת גמר
+      channel: email
+      email: Hila@M-hd.co.il
+      phone: 08-6227976
+      notes: זמן בדיקה עד 21 ימי עבודה
+      source_url: https://handasa.yeroham.muni.il/wp-content/uploads/2026/06/ה-7-אחראי-לביקורת-על-הביצוע-בקשה-לקבלת-תעודת-גמר-עד-6-יחד.pdf
+      verified_at: 2026-10-23
 
 # --- National bodies ------------------------------------------------------------------
 

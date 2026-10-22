@@ -69,6 +69,12 @@ def committee_title(name: str, kind: str) -> str:
     return f"הוועדה {'המרחבית' if kind == 'מרחבי' else 'המקומית'} לתכנון ובנייה {name}"
 
 
+def reference_matcher() -> "_Matcher":
+    """Name matching over the official authorities, for loading contacts on their own."""
+    snapshot = json.loads((DATA / "reference.json").read_text(encoding="utf-8"))
+    return _Matcher(snapshot["authorities"])
+
+
 async def load_reference(db: AsyncSession) -> dict[str, int]:
     snapshot = json.loads((DATA / "reference.json").read_text(encoding="utf-8"))
     municipalities = snapshot["authorities"]

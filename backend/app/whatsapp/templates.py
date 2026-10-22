@@ -119,7 +119,43 @@ IMPORT_FINISHED = Template(
     ),
 )
 
-ALL = (VERIFY_CODE, WELCOME, APPROVAL_REQUEST, DAILY_DIGEST, IMPORT_FINISHED)
+DRAFT_READY = Template(
+    name="arba_draft_ready",
+    category="UTILITY",
+    body="✉️ {{1}} · {{2}}\nArba הכינה {{3}}:\n{{4}}\n\nלשלוח?",
+    examples=(
+        "הבית ברעננה",
+        "אישור חיבור למים וביוב מתאגיד המים",
+        "פנייה למי רעננה",
+        "אישור חיבור למים וביוב – אחוזה 120, רעננה, היתר 20250412",
+    ),
+    buttons=("✓ שליחה", "עריכה באפליקציה"),
+)
+
+DRAFT_READY_PORTAL = Template(
+    name="arba_draft_ready_portal",
+    category="UTILITY",
+    body=(
+        "✉️ {{1}} · {{2}}\nArba הכינה {{3}}. הגוף הזה מקבל פניות רק באתר שלו, "
+        "אז הנוסח מוכן להדבקה: {{4}}"
+    ),
+    examples=(
+        "הבית ברעננה",
+        "אישור כבאות והצלה",
+        "פנייה לכבאות והצלה לישראל",
+        "https://app.arba.co.il/projects/123#drafts",
+    ),
+)
+
+ALL = (
+    VERIFY_CODE,
+    WELCOME,
+    APPROVAL_REQUEST,
+    DAILY_DIGEST,
+    IMPORT_FINISHED,
+    DRAFT_READY,
+    DRAFT_READY_PORTAL,
+)
 BY_NAME = {t.name: t for t in ALL}
 
 

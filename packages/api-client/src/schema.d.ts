@@ -452,7 +452,8 @@ export interface paths {
         put?: never;
         /**
          * Check Permit
-         * @description Re-runs the checks, e.g. after the permit file was uploaded.
+         * @description Re-runs the checks, e.g. after the permit file was uploaded. The first time there is a
+         *     permit file, Arba also starts reading its conditions.
          */
         post: operations["permits_check_permit"];
         delete?: never;
@@ -475,6 +476,97 @@ export interface paths {
          * @description The person found the permit in the committee's own system.
          */
         post: operations["permits_confirm_permit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/permit/conditions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Conditions
+         * @description The permit's conditions, with Arba's proposal for each.
+         */
+        get: operations["permits_list_conditions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/permit/conditions/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Read Conditions
+         * @description Reads the conditions again, e.g. after a new permit file.
+         */
+        post: operations["permits_read_conditions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/permit/conditions/accept-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept All Conditions */
+        post: operations["permits_accept_all_conditions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/permit/conditions/{condition_id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept Condition */
+        post: operations["permits_accept_condition"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/permit/conditions/{condition_id}/ignore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ignore Condition */
+        post: operations["permits_ignore_condition"];
         delete?: never;
         options?: never;
         head?: never;
@@ -612,6 +704,120 @@ export interface paths {
         get: operations["catch-up_get_scan"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Drafts
+         * @description Requests and reminders Arba wrote, waiting for approval.
+         */
+        get: operations["outreach_list_drafts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/requirements/{requirement_id}/drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Draft
+         * @description Arba writes to the body responsible for this step (or returns the draft already open).
+         */
+        post: operations["outreach_create_draft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/drafts/{draft_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Draft */
+        patch: operations["outreach_update_draft"];
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/drafts/{draft_id}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send Draft
+         * @description Sends the email. Replies come back to the project inbox.
+         */
+        post: operations["outreach_send_draft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/drafts/{draft_id}/submitted": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark Submitted
+         * @description The person submitted the text on the body's website or at its counter.
+         */
+        post: operations["outreach_mark_submitted"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/drafts/{draft_id}/discard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Discard Draft */
+        post: operations["outreach_discard_draft"];
         delete?: never;
         options?: never;
         head?: never;
@@ -834,6 +1040,14 @@ export interface components {
             /** Left */
             left: number;
         };
+        /** AcceptCondition */
+        AcceptCondition: {
+            /**
+             * As New
+             * @default false
+             */
+            as_new: boolean;
+        };
         /** AcceptResult */
         AcceptResult: {
             /**
@@ -855,6 +1069,16 @@ export interface components {
              * @default true
              */
             apply_status: boolean;
+        };
+        /** AttachmentOut */
+        AttachmentOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** File Name */
+            file_name: string;
         };
         /** AuthorityOut */
         AuthorityOut: {
@@ -879,7 +1103,7 @@ export interface components {
          * AuthorityType
          * @enum {string}
          */
-        AuthorityType: "municipality" | "water_corporation" | "fire_department" | "home_front_command" | "testing_lab" | "surveyor" | "soil_consultant" | "structural_engineer" | "supervising_engineer" | "electrical_inspector" | "gas_installer" | "plumber" | "green_building_lab" | "contractor" | "owner";
+        AuthorityType: "municipality" | "water_corporation" | "fire_department" | "home_front_command" | "testing_lab" | "surveyor" | "soil_consultant" | "structural_engineer" | "supervising_engineer" | "electrical_inspector" | "gas_installer" | "plumber" | "green_building_lab" | "contractor" | "owner" | "architect";
         /** Body_permits_extract_permit */
         Body_permits_extract_permit: {
             /** File */
@@ -939,6 +1163,52 @@ export interface components {
         CodeSent: {
             /** Phone */
             phone: string;
+        };
+        /** ConditionOut */
+        ConditionOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Number */
+            number: string | null;
+            /** Text */
+            text: string;
+            /** Title */
+            title: string;
+            timing: components["schemas"]["ConditionTiming"];
+            /** Stage */
+            stage: string;
+            authority_type: components["schemas"]["AuthorityType"];
+            /** Documents */
+            documents: string[];
+            status: components["schemas"]["ConditionStatus"];
+            /** Match Requirement Id */
+            match_requirement_id: string | null;
+            /** Requirement Id */
+            requirement_id: string | null;
+            /** Requirement Title */
+            requirement_title: string | null;
+            /** Source */
+            source: string;
+        };
+        /**
+         * ConditionStatus
+         * @enum {string}
+         */
+        ConditionStatus: "proposed" | "accepted" | "ignored";
+        /**
+         * ConditionTiming
+         * @enum {string}
+         */
+        ConditionTiming: "before_work" | "during_work" | "before_form4";
+        /** ConditionsOut */
+        ConditionsOut: {
+            /** Status */
+            status: string | null;
+            /** Conditions */
+            conditions: components["schemas"]["ConditionOut"][];
         };
         /** ConfirmWhatsApp */
         ConfirmWhatsApp: {
@@ -1029,6 +1299,72 @@ export interface components {
          * @enum {string}
          */
         DocumentSource: "upload" | "email";
+        /**
+         * DraftKind
+         * @enum {string}
+         */
+        DraftKind: "request" | "reminder";
+        /** DraftOut */
+        DraftOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Requirement Id
+             * Format: uuid
+             */
+            requirement_id: string;
+            /** Requirement Title */
+            requirement_title: string;
+            kind: components["schemas"]["DraftKind"];
+            channel: components["schemas"]["Channel"];
+            /** To Email */
+            to_email: string | null;
+            /** To Name */
+            to_name: string | null;
+            /** Portal Url */
+            portal_url: string | null;
+            /** Phone */
+            phone: string | null;
+            /** Recipient Source */
+            recipient_source: string | null;
+            /** Subject */
+            subject: string;
+            /** Body */
+            body: string;
+            /** Attachments */
+            attachments: components["schemas"]["AttachmentOut"][];
+            /** Missing Documents */
+            missing_documents: string[];
+            status: components["schemas"]["DraftStatus"];
+            /** Source */
+            source: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Sent At */
+            sent_at: string | null;
+        };
+        /**
+         * DraftStatus
+         * @enum {string}
+         */
+        DraftStatus: "draft" | "sent" | "discarded";
+        /** DraftUpdate */
+        DraftUpdate: {
+            /** Subject */
+            subject?: string | null;
+            /** Body */
+            body?: string | null;
+            /** To Email */
+            to_email?: string | null;
+            /** Attachment Ids */
+            attachment_ids?: string[] | null;
+        };
         /** FileDocument */
         FileDocument: {
             /** Requirement Id */
@@ -1153,6 +1489,11 @@ export interface components {
             /** Attachments */
             attachments: components["schemas"]["DocumentOut"][];
         };
+        /** NewDraft */
+        NewDraft: {
+            /** @default request */
+            kind: components["schemas"]["DraftKind"];
+        };
         /** NextSteps */
         NextSteps: {
             /** Ready */
@@ -1170,7 +1511,7 @@ export interface components {
          * NotificationKind
          * @enum {string}
          */
-        NotificationKind: "approval_needed" | "authority_request" | "daily_digest" | "whatsapp_connected" | "import_finished" | "test";
+        NotificationKind: "approval_needed" | "authority_request" | "daily_digest" | "whatsapp_connected" | "import_finished" | "draft_ready" | "test";
         /** NotificationList */
         NotificationList: {
             /** Unread */
@@ -1518,6 +1859,11 @@ export interface components {
             /** Requirements */
             requirements: components["schemas"]["RequirementOut"][];
         };
+        /**
+         * RequirementOrigin
+         * @enum {string}
+         */
+        RequirementOrigin: "template" | "permit_condition" | "city_list";
         /** RequirementOut */
         RequirementOut: {
             /**
@@ -1558,6 +1904,7 @@ export interface components {
             on_critical_path: boolean;
             /** Document Count */
             document_count: number;
+            origin: components["schemas"]["RequirementOrigin"];
         };
         /**
          * RequirementStatus
@@ -1749,6 +2096,8 @@ export interface components {
             confidence: number;
             /** Source */
             source: string;
+            /** Missing Documents */
+            missing_documents: string[];
             /**
              * Created At
              * Format: date-time
@@ -2899,6 +3248,167 @@ export interface operations {
             };
         };
     };
+    permits_list_conditions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConditionsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    permits_read_conditions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConditionsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    permits_accept_all_conditions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConditionsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    permits_accept_condition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                condition_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptCondition"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConditionsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    permits_ignore_condition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                condition_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConditionsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     directory_localities: {
         parameters: {
             query: {
@@ -3109,6 +3619,203 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ScanOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    outreach_list_drafts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    outreach_create_draft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                requirement_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewDraft"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    outreach_update_draft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                draft_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DraftUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    outreach_send_draft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                draft_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    outreach_mark_submitted: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                draft_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    outreach_discard_draft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                draft_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

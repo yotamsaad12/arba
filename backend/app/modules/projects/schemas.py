@@ -11,6 +11,7 @@ from app.core.enums import (
     PermitStatus,
     ProjectRole,
     ProjectStatus,
+    RequirementOrigin,
     RequirementStatus,
 )
 from app.modules.permits.schemas import PermitOut
@@ -130,6 +131,8 @@ class RequirementOut(BaseModel):
     blocked_by: list[uuid.UUID]
     on_critical_path: bool
     document_count: int
+    # template, permit_condition (from the permit) or city_list (the authority's own list).
+    origin: RequirementOrigin
 
 
 class RequirementList(BaseModel):

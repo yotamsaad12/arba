@@ -29,6 +29,8 @@ export type AuthorityInfo = Schemas["AuthorityOut"];
 export type ScanInfo = Schemas["ScanOut"];
 export type CatchUpReport = Schemas["CatchUpReport"];
 export type ReportItem = Schemas["ReportItem"];
+export type PermitCondition = Schemas["ConditionOut"];
+export type Draft = Schemas["DraftOut"];
 
 export interface ApiOptions {
   /** Empty for the web app, which reaches the API through the dev proxy / same origin. */

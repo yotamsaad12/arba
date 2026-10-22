@@ -10,12 +10,16 @@ from app.core.enums import (
     AuthorityType,
     Channel,
     ClientType,
+    ConditionStatus,
+    ConditionTiming,
     ContactSource,
     DeliveryChannel,
     DeliveryStatus,
     DependencyKind,
     DocumentSource,
     DocumentStatus,
+    DraftKind,
+    DraftStatus,
     InboundStatus,
     MailboxProvider,
     MessageDirection,
@@ -26,6 +30,7 @@ from app.core.enums import (
     ProjectRole,
     ProjectStatus,
     Repeat,
+    RequirementOrigin,
     RequirementStatus,
     ScanStatus,
     SuggestionStatus,
@@ -209,6 +214,8 @@ class Project(IdMixin, TimestampMixin, Base):
     )
     permit_confirmed_by: Mapped[uuid.UUID | None] = mapped_column(sa.ForeignKey("users.id"))
     permit_confirmed_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+    # Reading the permit's conditions: null (not yet), reading, ready, failed.
+    conditions_status: Mapped[str | None] = mapped_column(sa.String(16))
 
     template: Mapped[Template | None] = relationship()
 
@@ -345,6 +352,9 @@ class Requirement(IdMixin, TimestampMixin, Base):
     status_changed_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
     due_date: Mapped[date | None]
     completed_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+    origin: Mapped[RequirementOrigin] = mapped_column(default=RequirementOrigin.template)
+    # What it came from: the permit condition's id, or the city list entry ("<code>:<key>").
+    origin_ref: Mapped[str | None] = mapped_column(sa.String(100))
 
 
 class Dependency(Base):
@@ -489,6 +499,8 @@ class Suggestion(IdMixin, TimestampMixin, Base):
     decided_by: Mapped[uuid.UUID | None] = mapped_column(sa.ForeignKey("users.id"))
     decided_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
     applied_requirement_id: Mapped[uuid.UUID | None]
+    # What the authority said is missing (requests for information and rejections).
+    missing_documents: Mapped[list[str]] = mapped_column(JSONB, default=list)
     # Set when the suggestion came from importing an existing project's mailbox.
     scan_id: Mapped[uuid.UUID | None] = mapped_column(
         sa.ForeignKey("mailbox_scans.id", ondelete="SET NULL"), index=True
@@ -624,3 +636,105 @@ class AuditLog(IdMixin, Base):
     created_at: Mapped[datetime] = mapped_column(
         sa.DateTime(timezone=True), server_default=sa.func.now()
     )
+
+
+# --- Checklist completeness -----------------------------------------------------------
+
+
+class PermitCondition(IdMixin, TimestampMixin, Base):
+    """A condition written in the building permit, and how it entered the checklist."""
+
+    __tablename__ = "permit_conditions"
+
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
+    # As numbered in the permit, when it is.
+    number: Mapped[str | None] = mapped_column(sa.String(16))
+    text: Mapped[str] = mapped_column(sa.Text)
+    # A short step title, when the condition becomes a step of its own.
+    title: Mapped[str] = mapped_column(sa.String(300))
+    timing: Mapped[ConditionTiming]
+    stage: Mapped[str] = mapped_column(sa.String(64))
+    authority_type: Mapped[AuthorityType]
+    documents: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    # Arba's proposal: an existing step this belongs to (null: a new step).
+    match_requirement_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("requirements.id", ondelete="SET NULL")
+    )
+    status: Mapped[ConditionStatus] = mapped_column(default=ConditionStatus.proposed)
+    # The step it ended up in.
+    requirement_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("requirements.id", ondelete="SET NULL")
+    )
+    source: Mapped[str] = mapped_column(sa.String(16))
+
+
+class ChecklistFeedback(IdMixin, TimestampMixin, Base):
+    """An authority asked for something: evidence for improving the base checklist."""
+
+    __tablename__ = "checklist_feedback"
+
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
+    requirement_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("requirements.id", ondelete="SET NULL")
+    )
+    template_requirement_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("template_requirements.id", ondelete="SET NULL"), index=True
+    )
+    authority_type: Mapped[AuthorityType]
+    municipality_code: Mapped[int | None]
+    kind: Mapped[MessageKind]
+    summary: Mapped[str] = mapped_column(sa.Text)
+    # Documents the authority wanted that the step didn't list.
+    new_documents: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    suggestion_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("suggestions.id", ondelete="SET NULL")
+    )
+
+
+# --- Writing to authorities -----------------------------------------------------------
+
+
+class OutboundDraft(IdMixin, TimestampMixin, Base):
+    """A request or reminder Arba wrote to an approving body. Sent only after a person
+    approves it."""
+
+    __tablename__ = "outbound_drafts"
+
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
+    requirement_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("requirements.id", ondelete="CASCADE"), index=True
+    )
+    thread_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("threads.id", ondelete="SET NULL")
+    )
+    authority_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("authorities.id", ondelete="SET NULL")
+    )
+    kind: Mapped[DraftKind]
+    # email: Arba sends it. portal / in_person: the person submits the text themselves.
+    channel: Mapped[Channel]
+    to_email: Mapped[str | None] = mapped_column(sa.String(320))
+    to_name: Mapped[str | None] = mapped_column(sa.String(200))
+    portal_url: Mapped[str | None] = mapped_column(sa.String(500))
+    phone: Mapped[str | None] = mapped_column(sa.String(40))
+    subject: Mapped[str] = mapped_column(sa.String(300))
+    body: Mapped[str] = mapped_column(sa.Text)
+    attachment_ids: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    # Documents the authority will likely want that the project doesn't have yet.
+    missing_documents: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    status: Mapped[DraftStatus] = mapped_column(default=DraftStatus.draft, index=True)
+    source: Mapped[str] = mapped_column(sa.String(16))
+    model: Mapped[str | None] = mapped_column(sa.String(64))
+    decided_by: Mapped[uuid.UUID | None] = mapped_column(sa.ForeignKey("users.id"))
+    sent_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+    message_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("messages.id", ondelete="SET NULL")
+    )
+    # Where the address came from, shown next to it.
+    recipient_source: Mapped[str | None] = mapped_column(sa.String(32))

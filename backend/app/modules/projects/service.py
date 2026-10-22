@@ -19,6 +19,7 @@ from app.db.models import (
     TemplateRequirement,
     User,
 )
+from app.modules.directory.form4_lists import apply_city_list
 from app.modules.directory.service import get_locality
 from app.modules.permits.service import run_checks
 from app.modules.projects.schemas import ProjectCreate
@@ -84,6 +85,9 @@ async def create_project(db: AsyncSession, user: User, data: ProjectCreate) -> P
     db.add_all(requirements)
     await db.flush()
     db.add_all(Dependency(requirement_id=c, depends_on_id=p) for c, ps in deps.items() for p in ps)
+    await db.flush()
+    # The local authority's own Form 4 requirements, on top of the template.
+    await apply_city_list(db, project)
 
     db.add(
         AuditLog(

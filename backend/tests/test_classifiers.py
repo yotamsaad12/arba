@@ -68,6 +68,7 @@ def answer(**kw: Any) -> _Answer:
         summary_he="תאגיד המים אישר את החיבור.",
         reason_he="השולח הוא תאגיד המים.",
         confidence=0.93,
+        missing_documents_he=[],
     )
     return _Answer.model_validate(base | kw)
 
