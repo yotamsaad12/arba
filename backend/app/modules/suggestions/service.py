@@ -31,7 +31,13 @@ from app.modules.notifications import triggers
 from app.modules.notifications.service import resolve_for_suggestion
 from app.modules.projects.schemas import stages_of
 from app.modules.requirements.service import change_status
-from app.modules.suggestions.schemas import AcceptResult, AcceptSuggestion, SuggestionOut
+from app.modules.suggestions.schemas import (
+    AcceptAll,
+    AcceptAllResult,
+    AcceptResult,
+    AcceptSuggestion,
+    SuggestionOut,
+)
 
 log = logging.getLogger(__name__)
 
@@ -130,8 +136,15 @@ def _record(decision: Decision, **target: object) -> Suggestion:
 
 
 async def suggest_for_message(
-    db: AsyncSession, storage: Storage, classifier: Classifier, message_id: uuid.UUID
+    db: AsyncSession,
+    storage: Storage,
+    classifier: Classifier,
+    message_id: uuid.UUID,
+    *,
+    scan_id: uuid.UUID | None = None,
 ) -> Suggestion | None:
+    """Proposes where the message's conversation belongs. Mail found by a mailbox scan
+    (`scan_id`) is announced once, when the scan ends, not message by message."""
     message = await db.get(Message, message_id)
     if message is None:
         return None
@@ -164,11 +177,16 @@ async def suggest_for_message(
     ):
         older.status = SuggestionStatus.superseded
     suggestion = _record(
-        decision, project_id=project.id, thread_id=thread.id, message_id=message.id
+        decision,
+        project_id=project.id,
+        thread_id=thread.id,
+        message_id=message.id,
+        scan_id=scan_id,
     )
     db.add(suggestion)
     await db.commit()
-    await _announce(db, suggestion)
+    if scan_id is None:
+        await _announce(db, suggestion)
     return suggestion
 
 
@@ -321,6 +339,35 @@ async def accept(
     )
     await db.commit()
     return AcceptResult(requirement_id=target, status_applied=applied, status_error=error)
+
+
+async def accept_all(
+    db: AsyncSession, project: Project, user: User, data: AcceptAll
+) -> AcceptAllResult:
+    """Approves every pending suggestion that names a requirement, earliest requirement first
+    so that statuses can follow the dependency order."""
+    query = (
+        select(Suggestion.id, Suggestion.requirement_id)
+        .join(Requirement, Requirement.id == Suggestion.requirement_id, isouter=True)
+        .where(Suggestion.project_id == project.id, Suggestion.status == SuggestionStatus.pending)
+        .order_by(Requirement.order, Requirement.floor, Suggestion.created_at)
+    )
+    if data.scan_id:
+        query = query.where(Suggestion.scan_id == data.scan_id)
+    rows = list(await db.execute(query))
+    accepted = applied = left = 0
+    for suggestion_id, requirement_id in rows:
+        if requirement_id is None:
+            left += 1
+            continue
+        # Filing one thread can settle another suggestion; skip ones no longer pending.
+        current = await db.get(Suggestion, suggestion_id)
+        if current is None or current.status != SuggestionStatus.pending:
+            continue
+        result = await accept(db, project, user, suggestion_id, AcceptSuggestion())
+        accepted += 1
+        applied += result.status_applied
+    return AcceptAllResult(accepted=accepted, statuses_applied=applied, left=left)
 
 
 async def dismiss(db: AsyncSession, project: Project, user: User, suggestion_id: uuid.UUID) -> None:

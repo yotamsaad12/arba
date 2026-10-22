@@ -1,0 +1,120 @@
+# Contacts of approving bodies, collected by hand from official websites.
+#
+# Rules:
+# - Only what the body itself publishes. Every contact has the page it came from and the date.
+# - Many bodies take requests through a form or portal, not email: record channel "portal".
+# - Loaded by `python -m app.scripts.seed`; official contacts are replaced from this file on
+#   every load. Contacts people added or Arba learned from filed mail are kept.
+#
+# Entry kinds:
+#   committee: <planning committee name as in the official planning map>
+#   type: <AuthorityType> + name: ... + areas: [municipality names] (or national: true)
+
+# --- Local planning committees (pilot: large cities) ----------------------------------
+
+- committee: חיפה
+  website: https://www.haifa.muni.il/development-and-construction/building-licensing/
+  contacts:
+    - purpose: רישוי בנייה
+      channel: email
+      email: rishuybnia@haifa.muni.il
+      phone: 04-8356138
+      notes: מענה טלפוני א'-ה' 08:00–14:00
+      source_url: https://www.haifa.muni.il/development-and-construction/building-licensing/
+      verified_at: 2026-10-22
+    - purpose: קבלת קהל ברישוי בנייה
+      channel: in_person
+      url: https://myvisit.com/#!/home/provider/83?skipSignIn=true
+      notes: ימי ד' 08:30–12:30, בתיאום מראש
+      source_url: https://www.haifa.muni.il/development-and-construction/building-licensing/
+      verified_at: 2026-10-22
+    - purpose: אנשי קשר במינהל ההנדסה
+      channel: portal
+      url: https://haifa.complot.co.il/home_page/minhal_handasa/contact/
+      source_url: https://www.haifa.muni.il/development-and-construction/building-licensing/
+      verified_at: 2026-10-22
+
+- committee: תל אביב
+  website: https://www.tel-aviv.gov.il/Residents/Construction/Pages/onlinelicense.aspx
+  permit_search_url: https://www.tel-aviv.gov.il/Residents/Construction/Pages/LocatingRequest.aspx
+  notes: אין כתובת דוא"ל ציבורית לרישוי; פניות דרך טופס מקוון.
+  contacts:
+    - purpose: פנייה לאגף רישוי ופיקוח על הבנייה
+      channel: portal
+      url: https://www.tel-aviv.gov.il/Contact/Pages/Departments.aspx
+      source_url: https://www.tel-aviv.gov.il/Residents/Construction/Pages/Contact.aspx
+      verified_at: 2026-10-22
+    - purpose: זימון פגישה ברישוי ופיקוח
+      channel: in_person
+      url: https://www.tel-aviv.gov.il/Residents/Construction/Pages/Appointments.aspx
+      source_url: https://www.tel-aviv.gov.il/Residents/Construction/Pages/Contact.aspx
+      verified_at: 2026-10-22
+
+- committee: ראשון לציון
+  website: https://rishonlezion.complot.co.il/
+  permit_search_url: https://www.rishonlezion.muni.il/Residents/Construction/newengine/Pages/request2.aspx
+  contacts:
+    - purpose: פנייה ליחידות העירייה
+      channel: portal
+      url: https://my.rishonlezion.muni.il/external-new-call
+      source_url: https://www.rishonlezion.muni.il/Residents/Construction/Pages/default.aspx
+      verified_at: 2026-10-22
+
+- committee: נתניה
+  website: https://www.netanya.muni.il/CityHall/Engineering/LicensingCenter/Pages/default.aspx
+  permit_search_url: http://www.netanya.muni.il/CityHall/Engineering/Pages/BuildingLicensing.aspx
+  contacts:
+    - purpose: פנייה למוקד העירוני (106)
+      channel: portal
+      url: https://www.netanya.muni.il/CityHall/ServicesInnovation/Pages/CallCenter.aspx
+      phone: "106"
+      source_url: https://www.netanya.muni.il/CityHall/Engineering/LicensingCenter/Pages/default.aspx
+      verified_at: 2026-10-22
+
+- committee: רעננה
+  website: https://www.raanana.muni.il/residents/engineering/building-permit/
+  permit_search_url: https://www.raanana.muni.il/residents/engineering/building-permit/building-permit-app/
+  contacts:
+    - purpose: זימון תור לאגף הנדסה
+      channel: in_person
+      url: https://myvisit.com/#!/home/provider/224?skipSignIn=true
+      source_url: https://www.raanana.muni.il/residents/engineering/building-permit/
+      verified_at: 2026-10-22
+    - purpose: צרו קשר
+      channel: portal
+      url: https://www.raanana.muni.il/contact-us/
+      source_url: https://www.raanana.muni.il/
+      verified_at: 2026-10-22
+
+- committee: אשדוד
+  website: https://www.ashdod.muni.il/he-il/אתר-העיר/הנדסה/
+  contacts:
+    - purpose: צור קשר
+      channel: portal
+      url: https://www.ashdod.muni.il/he-il/אתר-העיר/דף-הבית/צור-קשר/צור-קשר/
+      source_url: https://www.ashdod.muni.il/
+      verified_at: 2026-10-22
+
+# --- Water corporations ---------------------------------------------------------------
+
+- type: water_corporation
+  name: מי רעננה
+  website: https://mei-raanana.co.il
+  areas: [רעננה]
+
+# --- National bodies ------------------------------------------------------------------
+
+- type: fire_department
+  name: כבאות והצלה לישראל
+  national: true
+  # The fire-prevention division handles building approvals and inspections.
+  website: https://www.gov.il/he/departments/units/fire_safety
+  notes: >
+    לבית חד/דו-משפחתי הדרישות הן בעיקר הצהרות: גלאי עשן עצמאיים לפי ת"י 1220 חלק 5 והצהרת
+    יועץ בטיחות/עורך הבקשה, גלגילון כיבוי 3/4", והצהרת עורך הבקשה שהמבנה נבנה לפי התכניות
+    שאושרו. מקור: מאגר "דרישות בטיחות אש להיתרי בניה" ב-data.gov.il.
+
+- type: home_front_command
+  name: פיקוד העורף
+  national: true
+  website: https://www.oref.org.il

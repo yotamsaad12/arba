@@ -346,6 +346,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/suggestions/accept-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept All
+         * @description Approves every suggestion that names a requirement, in dependency order.
+         */
+        post: operations["suggestions_accept_all"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/suggestions/{suggestion_id}/accept": {
         parameters: {
             query?: never;
@@ -377,6 +397,221 @@ export interface paths {
         put?: never;
         /** Dismiss Suggestion */
         post: operations["suggestions_dismiss_suggestion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/permits/extract": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Extract Permit
+         * @description Reads a permit PDF before the project exists. Nothing is stored.
+         */
+        post: operations["permits_extract_permit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/permit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Permit */
+        get: operations["permits_get_permit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Permit */
+        patch: operations["permits_update_permit"];
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/permit/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check Permit
+         * @description Re-runs the checks, e.g. after the permit file was uploaded.
+         */
+        post: operations["permits_check_permit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/permit/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm Permit
+         * @description The person found the permit in the committee's own system.
+         */
+        post: operations["permits_confirm_permit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/directory/localities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Localities
+         * @description Official localities matching a name, with their authority and planning committee.
+         */
+        get: operations["directory_localities"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/authorities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Project Authorities
+         * @description The bodies responsible for this project's area, with known contacts.
+         */
+        get: operations["directory_project_authorities"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/catch-up": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Catch Up
+         * @description For a project already under way: marks the required steps before `stage` as done.
+         */
+        post: operations["catch-up_catch_up"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/catch-up/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Report
+         * @description What Arba found for each requirement, and which steps done so far lack documents.
+         */
+        get: operations["catch-up_report"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/mailbox/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Connect
+         * @description How to give Arba one-time, read-only access to the person's mailbox.
+         */
+        get: operations["catch-up_connect"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/mailbox/scans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Simulated Scan
+         * @description Scans the simulated mailbox (dev). Real mailboxes start from the provider's consent page.
+         */
+        post: operations["catch-up_start_simulated_scan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/mailbox/scans/{scan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Scan */
+        get: operations["catch-up_get_scan"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -585,6 +820,20 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AcceptAll */
+        AcceptAll: {
+            /** Scan Id */
+            scan_id?: string | null;
+        };
+        /** AcceptAllResult */
+        AcceptAllResult: {
+            /** Accepted */
+            accepted: number;
+            /** Statuses Applied */
+            statuses_applied: number;
+            /** Left */
+            left: number;
+        };
         /** AcceptResult */
         AcceptResult: {
             /**
@@ -607,11 +856,35 @@ export interface components {
              */
             apply_status: boolean;
         };
+        /** AuthorityOut */
+        AuthorityOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            type: components["schemas"]["AuthorityType"];
+            /** Name */
+            name: string;
+            /** Website */
+            website: string | null;
+            /** Permit Search Url */
+            permit_search_url: string | null;
+            /** National */
+            national: boolean;
+            /** Contacts */
+            contacts: components["schemas"]["ContactOut"][];
+        };
         /**
          * AuthorityType
          * @enum {string}
          */
         AuthorityType: "municipality" | "water_corporation" | "fire_department" | "home_front_command" | "testing_lab" | "surveyor" | "soil_consultant" | "structural_engineer" | "supervising_engineer" | "electrical_inspector" | "gas_installer" | "plumber" | "green_building_lab" | "contractor" | "owner";
+        /** Body_permits_extract_permit */
+        Body_permits_extract_permit: {
+            /** File */
+            file: string;
+        };
         /**
          * BuildState
          * @description Where construction stands, for progress visuals.
@@ -624,6 +897,33 @@ export interface components {
             focus_stage: string | null;
             /** Focus Floor */
             focus_floor: number | null;
+        };
+        /** CatchUp */
+        CatchUp: {
+            /** Stage */
+            stage: string;
+        };
+        /** CatchUpReport */
+        CatchUpReport: {
+            /** Found */
+            found: components["schemas"]["ReportItem"][];
+            /** Missing */
+            missing: components["schemas"]["ReportItem"][];
+            /** Pending Suggestions */
+            pending_suggestions: number;
+            /** Unsure */
+            unsure: number;
+            scan: components["schemas"]["ScanOut"] | null;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "empty" | "scanning" | "ready";
+        };
+        /** CatchUpResult */
+        CatchUpResult: {
+            /** Marked Done */
+            marked_done: number;
         };
         /**
          * Channel
@@ -645,6 +945,33 @@ export interface components {
             /** Code */
             code: string;
         };
+        /** ContactOut */
+        ContactOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Purpose */
+            purpose: string;
+            channel: components["schemas"]["Channel"];
+            /** Email */
+            email: string | null;
+            /** Phone */
+            phone: string | null;
+            /** Url */
+            url: string | null;
+            source: components["schemas"]["ContactSource"];
+            /** Source Url */
+            source_url: string | null;
+            /** Verified At */
+            verified_at: string | null;
+        };
+        /**
+         * ContactSource
+         * @enum {string}
+         */
+        ContactSource: "official_site" | "user" | "learned";
         /** CriticalPath */
         CriticalPath: {
             /** Requirement Ids */
@@ -726,6 +1053,23 @@ export interface components {
             /** Pending Suggestions */
             pending_suggestions: number;
         };
+        /** LocalityOut */
+        LocalityOut: {
+            /** Code */
+            code: number;
+            /** Name */
+            name: string;
+            /** Municipality Code */
+            municipality_code: number | null;
+            /** Municipality */
+            municipality: string | null;
+            /** Committee Code */
+            committee_code: string | null;
+            /** Committee */
+            committee: string | null;
+            /** Committee Source */
+            committee_source: string | null;
+        };
         /** LoginIn */
         LoginIn: {
             /**
@@ -742,6 +1086,17 @@ export interface components {
              */
             client: "web" | "mobile";
         };
+        /** MailboxConnect */
+        MailboxConnect: {
+            provider: components["schemas"]["MailboxProvider"] | null;
+            /** Url */
+            url: string | null;
+        };
+        /**
+         * MailboxProvider
+         * @enum {string}
+         */
+        MailboxProvider: "gmail" | "simulator";
         /** MeOut */
         MeOut: {
             /**
@@ -815,7 +1170,7 @@ export interface components {
          * NotificationKind
          * @enum {string}
          */
-        NotificationKind: "approval_needed" | "authority_request" | "daily_digest" | "whatsapp_connected" | "test";
+        NotificationKind: "approval_needed" | "authority_request" | "daily_digest" | "whatsapp_connected" | "import_finished" | "test";
         /** NotificationList */
         NotificationList: {
             /** Unread */
@@ -867,6 +1222,102 @@ export interface components {
             type: components["schemas"]["ClientType"];
             role: components["schemas"]["OrgRole"];
         };
+        /** PermitCheck */
+        PermitCheck: {
+            /**
+             * Check
+             * @enum {string}
+             */
+            check: "document" | "number" | "validity" | "committee" | "location";
+            /** Ok */
+            ok: boolean | null;
+            /** Message */
+            message: string;
+        };
+        /** PermitExtraction */
+        PermitExtraction: {
+            fields: components["schemas"]["PermitFields"];
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "claude" | "rules";
+            locality: components["schemas"]["LocalityOut"] | null;
+        };
+        /** PermitFields */
+        PermitFields: {
+            /**
+             * Is Permit
+             * @default true
+             */
+            is_permit: boolean;
+            /** Permit Number */
+            permit_number?: string | null;
+            /** Request Number */
+            request_number?: string | null;
+            /** Committee */
+            committee?: string | null;
+            /** Locality */
+            locality?: string | null;
+            /** Address */
+            address?: string | null;
+            /** Gush */
+            gush?: string | null;
+            /** Helka */
+            helka?: string | null;
+            /** Issue Date */
+            issue_date?: string | null;
+            /** Valid Until */
+            valid_until?: string | null;
+            /** Applicants */
+            applicants?: string[];
+            /** Description */
+            description?: string | null;
+        };
+        /** PermitOut */
+        PermitOut: {
+            status: components["schemas"]["PermitStatus"];
+            /** Number */
+            number: string | null;
+            /** Request Number */
+            request_number: string | null;
+            /** Issue Date */
+            issue_date: string | null;
+            /** Valid Until */
+            valid_until: string | null;
+            /** Committee On Permit */
+            committee_on_permit: string | null;
+            /** Official Committee */
+            official_committee: string | null;
+            /** Checks */
+            checks: components["schemas"]["PermitCheck"][];
+            /** Confirmed At */
+            confirmed_at: string | null;
+            /** Search Url */
+            search_url: string | null;
+            /** Committee Website */
+            committee_website: string | null;
+            /** Requirement Id */
+            requirement_id: string | null;
+        };
+        /**
+         * PermitStatus
+         * @enum {string}
+         */
+        PermitStatus: "pending_verification" | "document_checked" | "committee_confirmed" | "needs_attention";
+        /** PermitUpdate */
+        PermitUpdate: {
+            /** Permit Number */
+            permit_number?: string | null;
+            /** Permit Request Number */
+            permit_request_number?: string | null;
+            /** Permit Issue Date */
+            permit_issue_date?: string | null;
+            /** Permit Valid Until */
+            permit_valid_until?: string | null;
+            /** Permit Committee */
+            permit_committee?: string | null;
+        };
         /** Progress */
         Progress: {
             /** Done */
@@ -883,8 +1334,10 @@ export interface components {
              * Format: uuid
              */
             template_id: string;
+            /** Locality Code */
+            locality_code?: number | null;
             /** Municipality */
-            municipality: string;
+            municipality?: string | null;
             /** Address */
             address?: string | null;
             /**
@@ -898,8 +1351,14 @@ export interface components {
             helka?: string | null;
             /** Permit Number */
             permit_number?: string | null;
+            /** Permit Request Number */
+            permit_request_number?: string | null;
+            /** Permit Issue Date */
+            permit_issue_date?: string | null;
             /** Permit Valid Until */
             permit_valid_until?: string | null;
+            /** Permit Committee */
+            permit_committee?: string | null;
         };
         /** ProjectDetail */
         ProjectDetail: {
@@ -935,10 +1394,16 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Locality Code */
+            locality_code: number | null;
+            /** Municipality Code */
+            municipality_code: number | null;
+            permit_status: components["schemas"]["PermitStatus"];
             role: components["schemas"]["ProjectRole"];
             build: components["schemas"]["BuildState"];
             /** Stages */
             stages: components["schemas"]["Stage"][];
+            permit: components["schemas"]["PermitOut"];
             inbox: components["schemas"]["InboxCounts"];
         };
         /** ProjectOut */
@@ -975,6 +1440,11 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Locality Code */
+            locality_code: number | null;
+            /** Municipality Code */
+            municipality_code: number | null;
+            permit_status: components["schemas"]["PermitStatus"];
             role: components["schemas"]["ProjectRole"];
             build: components["schemas"]["BuildState"];
         };
@@ -1021,6 +1491,25 @@ export interface components {
              * @enum {string}
              */
             client: "web" | "mobile";
+        };
+        /** ReportItem */
+        ReportItem: {
+            /**
+             * Requirement Id
+             * Format: uuid
+             */
+            requirement_id: string;
+            /** Title */
+            title: string;
+            /** Stage */
+            stage: string;
+            status: components["schemas"]["RequirementStatus"];
+            /** Required Documents */
+            required_documents: string[];
+            /** Documents */
+            documents: number;
+            /** Pending */
+            pending: number;
         };
         /** RequirementList */
         RequirementList: {
@@ -1075,6 +1564,40 @@ export interface components {
          * @enum {string}
          */
         RequirementStatus: "not_started" | "blocked" | "ready" | "in_progress" | "waiting_for_authority" | "needs_fix" | "done" | "not_applicable";
+        /** ScanOut */
+        ScanOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            provider: components["schemas"]["MailboxProvider"];
+            /** Account Email */
+            account_email: string;
+            status: components["schemas"]["ScanStatus"];
+            /** Query */
+            query: string;
+            /** Messages Found */
+            messages_found: number;
+            /** Messages Imported */
+            messages_imported: number;
+            /** Files Imported */
+            files_imported: number;
+            /** Error */
+            error: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Finished At */
+            finished_at: string | null;
+        };
+        /**
+         * ScanStatus
+         * @enum {string}
+         */
+        ScanStatus: "running" | "done" | "failed";
         /** SettingsOut */
         SettingsOut: {
             /** Notify Email */
@@ -2114,6 +2637,41 @@ export interface operations {
             };
         };
     };
+    suggestions_accept_all: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptAll"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptAllResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     suggestions_accept_suggestion: {
         parameters: {
             query?: never;
@@ -2168,6 +2726,389 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    permits_extract_permit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_permits_extract_permit"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitExtraction"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    permits_get_permit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    permits_update_permit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PermitUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    permits_check_permit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    permits_confirm_permit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    directory_localities: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocalityOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    directory_project_authorities: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthorityOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "catch-up_catch_up": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CatchUp"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatchUpResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "catch-up_report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatchUpReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "catch-up_connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MailboxConnect"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "catch-up_start_simulated_scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScanOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "catch-up_get_scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                scan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScanOut"];
+                };
             };
             /** @description Validation Error */
             422: {

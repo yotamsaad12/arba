@@ -16,6 +16,8 @@ dependencies = [
     "boto3>=1.35",
     "anthropic>=2.0",
     "httpx>=0.28",
+    "pypdf>=5.0",
+    "python-multipart>=0.0.20",
 ]
 
 [project.optional-dependencies]

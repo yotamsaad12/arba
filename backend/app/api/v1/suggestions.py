@@ -6,7 +6,13 @@ from app.core.deps import DB, CurrentUser
 from app.core.enums import ProjectRole
 from app.modules.projects.service import get_project_for_user
 from app.modules.suggestions import service
-from app.modules.suggestions.schemas import AcceptResult, AcceptSuggestion, SuggestionOut
+from app.modules.suggestions.schemas import (
+    AcceptAll,
+    AcceptAllResult,
+    AcceptResult,
+    AcceptSuggestion,
+    SuggestionOut,
+)
 
 router = APIRouter(prefix="/projects/{project_id}/suggestions", tags=["suggestions"])
 
@@ -16,6 +22,15 @@ async def list_suggestions(project_id: uuid.UUID, db: DB, user: CurrentUser) -> 
     """Filing proposals waiting for approval, newest first."""
     project, _ = await get_project_for_user(db, project_id, user)
     return await service.list_pending(db, project.id)
+
+
+@router.post("/accept-all")
+async def accept_all(
+    project_id: uuid.UUID, data: AcceptAll, db: DB, user: CurrentUser
+) -> AcceptAllResult:
+    """Approves every suggestion that names a requirement, in dependency order."""
+    project, _ = await get_project_for_user(db, project_id, user, ProjectRole.manager)
+    return await service.accept_all(db, project, user, data)
 
 
 @router.post("/{suggestion_id}/accept")

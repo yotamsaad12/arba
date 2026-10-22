@@ -13,7 +13,7 @@ Requirements: Docker, Python 3.12+, Node 22+.
 make setup     # backend venv + npm workspaces
 make up        # Postgres, Redis, Mailpit
 make migrate
-make seed      # loads the private-house template
+make seed      # loads the private-house template, localities, committees and contacts
 make api       # terminal 1: http://localhost:8000/docs
 make web       # terminal 2: http://localhost:5180
 ```
@@ -57,6 +57,40 @@ including Shabbat), everything else in one morning summary. Channels: in-app bel
   and set `ARBA_RUN_WORKER_IN_API=false`.
 - Going live with real WhatsApp: [docs/whatsapp-setup.md](docs/whatsapp-setup.md).
 
+### Permits and the directory of approving bodies
+
+A project starts from its building permit. The person uploads the permit PDF, Arba reads it
+(Claude, or text rules without an API key) and they confirm the fields. Arba then checks the
+file, number, validity, and that the committee on the permit is the one responsible for the
+chosen locality. The project opens either way, as "waiting for permit verification" until the
+checks pass; the last step is the person finding the permit on the committee's own site.
+
+- Localities, municipalities and planning committees come from official open data
+  (data.gov.il and the Planning Administration map), snapshotted in
+  `backend/app/modules/directory/data/reference.json`. Refresh with
+  `cd backend && .venv/bin/python -m app.scripts.sync_reference_data`, then `make seed`.
+- Contacts of approving bodies are in `backend/app/modules/directory/data/contacts.yaml`:
+  only what the body publishes itself, each with its source page and date. Arba also learns
+  contacts from mail filed to a requirement (shown as "learned from mail").
+
+### Projects already under way
+
+When a project started before Arba, the person says which stage it is at; Arba marks the
+required steps before it as done, then gathers what already exists:
+
+- **Mailbox scan** (`/projects/:id/import`): one-time, read-only access. Arba searches only
+  for mail about the project (permit and request numbers, block, street address, and building
+  mail from the area's approving bodies), imports it into the project inbox and suggests a
+  filing per conversation. One notification when the scan ends, not one per email. Gmail
+  access is online-only (no refresh token) and revoked when the scan finishes.
+- **Bulk upload**: any number of files, each filed by the usual suggestions.
+- **Gap report**: what was found per requirement, and steps already done with no documents.
+
+In dev the scan runs against a simulated mailbox. For Gmail set `ARBA_GOOGLE_CLIENT_ID` and
+`ARBA_GOOGLE_CLIENT_SECRET` (a Google Cloud OAuth web client with the Gmail API enabled and
+`<app_url>/api/v1/mailbox/google/callback` as redirect URI). `gmail.readonly` is a restricted
+scope: up to 100 test users before Google's verification and security assessment.
+
 ## Layout
 
 ```
@@ -69,6 +103,9 @@ packages/i18n/         Hebrew strings
 backend/               FastAPI, SQLAlchemy, Alembic
   app/modules/requirements/engine.py      dependency engine and critical path
   app/modules/templates/data/*.yaml       checklist templates
+  app/modules/directory/data/             localities, committees and contacts of approving bodies
+  app/modules/permits/                    reading and checking the building permit
+  app/modules/catchup/                    projects already under way: mailbox scan, gap report
 infra/                 docker-compose for local services
 ```
 

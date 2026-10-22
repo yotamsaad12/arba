@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { useAuth } from "./auth/AuthProvider";
 import { AppLayout } from "./components/Layout";
 import { Spinner } from "./components/ui";
+import { ImportPage } from "./pages/Import";
 import { LandingPage } from "./pages/Landing";
 import { LoginPage } from "./pages/Login";
 import { NewProjectPage } from "./pages/NewProject";
@@ -33,6 +34,7 @@ export function App() {
             <Route index element={<ProjectsPage />} />
             <Route path="/projects/new" element={<NewProjectPage />} />
             <Route path="/projects/:projectId" element={<ProjectPage />} />
+            <Route path="/projects/:projectId/import" element={<ImportPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/dev/whatsapp" element={<WhatsAppSimulatorPage />} />
           </Route>

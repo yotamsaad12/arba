@@ -17,6 +17,7 @@ from app.db.models import (
     Thread,
     User,
 )
+from app.modules.directory.service import learn_from_thread
 from app.modules.documents import service as documents
 from app.modules.inbox.schemas import MessageOut, ThreadDetail, ThreadSummary
 from app.modules.projects.schemas import InboxCounts
@@ -186,6 +187,7 @@ async def file_thread(
         .values(requirement_id=requirement_id)
     )
     await resolve_pending(db, user, requirement_id, thread_id=thread.id)
+    await learn_from_thread(db, project, thread, requirement_id)
     db.add(
         AuditLog(
             organization_id=project.organization_id,

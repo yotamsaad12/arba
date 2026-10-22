@@ -8,6 +8,7 @@ from app.core.enums import RequirementStatus as S
 from app.db.models import Project, Requirement
 from app.modules.documents.service import document_counts
 from app.modules.inbox.service import counts as inbox_counts
+from app.modules.permits.service import permit_out
 from app.modules.projects import service
 from app.modules.projects.schemas import (
     BuildState,
@@ -120,6 +121,7 @@ async def get_project(project_id: uuid.UUID, db: DB, user: CurrentUser) -> Proje
         **summary.model_dump(),
         stages=stages_of(project),
         inbox=await inbox_counts(db, project.id),
+        permit=await permit_out(db, project),
     )
 
 

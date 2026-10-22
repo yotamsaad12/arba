@@ -65,25 +65,48 @@ async def _process(
         return None
     inbound.project_id = project.id
 
+    message_id = await store_email(db, storage, project, email, inbound_email_id=inbound.id)
+    if message_id is None:
+        inbound.status = InboundStatus.duplicate
+        await db.commit()
+        return None
+    inbound.status = InboundStatus.processed
+    inbound.error = None
+    await db.commit()
+    return message_id
+
+
+async def store_email(
+    db: AsyncSession,
+    storage: Storage,
+    project: Project,
+    email: ParsedEmail,
+    *,
+    direction: MessageDirection = MessageDirection.inbound,
+    inbound_email_id: uuid.UUID | None = None,
+) -> uuid.UUID | None:
+    """Adds the email to its thread in the project, with its attachments as documents.
+    Returns the new message's id, or None if the project already has it. Flushes, doesn't
+    commit."""
     duplicate = await db.scalar(
         select(Message.id).where(
             Message.project_id == project.id, Message.rfc_message_id == email.message_id
         )
     )
     if duplicate:
-        inbound.status = InboundStatus.duplicate
-        await db.commit()
         return None
 
     thread = await _find_thread(db, project.id, email)
     if thread is None:
+        # Mail the person sent (found in their mailbox) is a conversation with its recipient.
+        outbound = direction == MessageDirection.outbound and email.to
         thread = Thread(
             id=uuid.uuid4(),
             project_id=project.id,
             subject=email.subject or "(ללא נושא)",
             normalized_subject=normalize_subject(email.subject),
-            counterparty_email=email.from_email,
-            counterparty_name=email.from_name,
+            counterparty_email=email.to[0] if outbound else email.from_email,
+            counterparty_name=None if outbound else email.from_name,
             last_message_at=email.sent_at,
         )
         db.add(thread)
@@ -94,7 +117,7 @@ async def _process(
         id=uuid.uuid4(),
         project_id=project.id,
         thread_id=thread.id,
-        direction=MessageDirection.inbound,
+        direction=direction,
         from_email=email.from_email,
         from_name=email.from_name,
         to=email.to,
@@ -105,7 +128,7 @@ async def _process(
         in_reply_to=email.in_reply_to,
         references=email.references,
         sent_at=email.sent_at,
-        inbound_email_id=inbound.id,
+        inbound_email_id=inbound_email_id,
     )
     db.add(message)
     await db.flush()
@@ -132,9 +155,7 @@ async def _process(
             )
         )
 
-    inbound.status = InboundStatus.processed
-    inbound.error = None
-    await db.commit()
+    await db.flush()
     return message.id
 
 

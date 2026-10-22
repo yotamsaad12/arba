@@ -166,3 +166,68 @@ def parse_postmark(payload: dict[str, Any]) -> ParsedEmail:
         sent_at=sent_at,
         attachments=attachments,
     )
+
+
+def parse_rfc822(raw: bytes, provider_id: str) -> ParsedEmail:
+    """A raw message as mailbox APIs return it (Gmail `format=raw`, IMAP RFC822)."""
+    from email import message_from_bytes, policy
+    from email.message import EmailMessage
+
+    msg = message_from_bytes(raw, policy=policy.default)
+    assert isinstance(msg, EmailMessage)
+
+    def addresses(*names: str) -> list[str]:
+        values = [str(v) for n in names for v in msg.get_all(n, [])]
+        return [addr.lower() for _, addr in getaddresses(values) if addr]
+
+    sender = getaddresses([str(msg.get("From", ""))])
+    from_name, from_email = sender[0] if sender else ("", "")
+
+    sent_at = datetime.now(UTC)
+    if msg.get("Date"):
+        try:
+            sent_at = parsedate_to_datetime(str(msg["Date"]))
+            if sent_at.tzinfo is None:
+                sent_at = sent_at.replace(tzinfo=UTC)
+        except (TypeError, ValueError):
+            pass
+
+    text = ""
+    body = msg.get_body(preferencelist=("plain", "html"))
+    if body is not None:
+        content = body.get_content()
+        text = html_to_text(content) if body.get_content_type() == "text/html" else content
+
+    attachments = []
+    for part in msg.iter_attachments():
+        if not isinstance(part, EmailMessage) or part.is_multipart():
+            continue
+        data = part.get_payload(decode=True)
+        if not isinstance(data, bytes):
+            continue
+        content_id = part.get("Content-ID")
+        attachments.append(
+            ParsedAttachment(
+                name=part.get_filename() or "attachment",
+                content_type=part.get_content_type(),
+                data=data,
+                content_id=str(content_id) if content_id else None,
+            )
+        )
+
+    to, cc = addresses("To"), addresses("Cc")
+    return ParsedEmail(
+        provider_id=provider_id,
+        message_id=normalize_message_id(msg.get("Message-ID")) or f"import-{provider_id}",
+        in_reply_to=normalize_message_id(msg.get("In-Reply-To")),
+        references=message_ids(msg.get("References")),
+        from_email=from_email.lower(),
+        from_name=from_name or None,
+        to=to,
+        cc=cc,
+        recipients=list(dict.fromkeys([*to, *cc])),
+        subject=str(msg.get("Subject", "")).strip(),
+        text=text.strip(),
+        sent_at=sent_at,
+        attachments=attachments,
+    )

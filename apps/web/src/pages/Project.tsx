@@ -8,8 +8,10 @@ import { useCelebrate } from "../components/Celebrations";
 import { Alert, Spinner, cx } from "../components/ui";
 import { $api } from "../lib/api";
 import { useErrorMessage } from "../lib/useErrorMessage";
+import { CatchUpEntry } from "./Import";
 import { DocumentsView } from "../project/DocumentsView";
 import { InboxView } from "../project/InboxView";
+import { AuthoritiesPanel, PermitBanner } from "../project/PermitPanel";
 import { RequirementCard } from "../project/RequirementCard";
 import { ApprovalsPanel } from "../project/SuggestionCard";
 import { STAGE_ICON, isStageKey, sceneModel } from "../scene/model";
@@ -123,6 +125,8 @@ export function ProjectPage() {
         >
           {tab === "now" && (
             <div className="space-y-8">
+              <PermitBanner projectId={projectId} permit={p.permit} canEdit={canEdit} />
+              {canEdit && <CatchUpEntry projectId={projectId} />}
               {requirements.data && (
                 <ApprovalsPanel
                   projectId={projectId}
@@ -137,6 +141,7 @@ export function ProjectPage() {
               ) : (
                 <Spinner label={t("app.loading")} />
               )}
+              <AuthoritiesPanel projectId={projectId} />
             </div>
           )}
           {tab !== "now" && !requirements.data && <Spinner label={t("app.loading")} />}

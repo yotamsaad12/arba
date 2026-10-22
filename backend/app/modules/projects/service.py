@@ -19,6 +19,8 @@ from app.db.models import (
     TemplateRequirement,
     User,
 )
+from app.modules.directory.service import get_locality
+from app.modules.permits.service import run_checks
 from app.modules.projects.schemas import ProjectCreate
 from app.modules.requirements.service import apply_automatic_statuses, run_engine
 
@@ -43,6 +45,10 @@ async def create_project(db: AsyncSession, user: User, data: ProjectCreate) -> P
     if template is None:
         raise not_found("template")
 
+    place = await get_locality(db, data.locality_code) if data.locality_code else None
+    if data.locality_code and place is None:
+        raise not_found("locality")
+
     slug = new_slug()
     project = Project(
         id=uuid.uuid4(),
@@ -51,7 +57,14 @@ async def create_project(db: AsyncSession, user: User, data: ProjectCreate) -> P
         name=data.name,
         slug=slug,
         address=data.address,
-        municipality=data.municipality,
+        # Shown as the place; the official codes below drive the directory.
+        municipality=(place.name if place else data.municipality) or "",
+        locality_code=place.code if place else None,
+        municipality_code=place.municipality_code if place else None,
+        committee_code=place.committee_code if place else None,
+        permit_request_number=data.permit_request_number,
+        permit_issue_date=data.permit_issue_date,
+        permit_committee=data.permit_committee,
         building_type=template.building_type,
         client_type=membership.organization.type,
         floors=data.floors,
@@ -84,6 +97,7 @@ async def create_project(db: AsyncSession, user: User, data: ProjectCreate) -> P
         )
     )
     await db.commit()
+    await run_checks(db, project, user)
     return project
 
 

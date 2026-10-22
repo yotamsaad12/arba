@@ -8,10 +8,13 @@ from fastapi.routing import APIRoute
 
 from app.api.v1 import (
     auth,
+    catchup,
     dev,
+    directory,
     documents,
     inbox,
     me,
+    permits,
     projects,
     storage,
     suggestions,
@@ -64,6 +67,10 @@ def create_app() -> FastAPI:
     v1.include_router(documents.router)
     v1.include_router(inbox.router)
     v1.include_router(suggestions.router)
+    v1.include_router(permits.router)
+    v1.include_router(directory.router)
+    v1.include_router(catchup.router)
+    v1.include_router(catchup.callbacks)
     v1.include_router(storage.router)
     v1.include_router(webhooks.router)
     v1.include_router(me.router)

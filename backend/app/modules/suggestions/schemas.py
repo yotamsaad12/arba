@@ -39,3 +39,15 @@ class AcceptResult(BaseModel):
     status_applied: bool
     # Error code when the status could not change, e.g. dependencies_not_done.
     status_error: str | None
+
+
+class AcceptAll(BaseModel):
+    # Only the suggestions from this mailbox scan; leave out for every pending suggestion.
+    scan_id: uuid.UUID | None = None
+
+
+class AcceptAllResult(BaseModel):
+    accepted: int
+    statuses_applied: int
+    # Suggestions Arba wasn't sure about (no requirement): left for the person.
+    left: int

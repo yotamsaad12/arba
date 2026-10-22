@@ -73,6 +73,14 @@ class Settings(BaseSettings):
     whatsapp_verify_token: str = "dev-only-verify-token"
     whatsapp_language: str = "he"
 
+    # Importing an existing project's mail. "auto" uses Gmail when a Google OAuth client is
+    # configured, otherwise the simulator (dev and test only).
+    mailbox_provider: Literal["auto", "gmail", "simulator", "disabled"] = "auto"
+    google_client_id: str | None = None
+    google_client_secret: str | None = None
+    # Mailbox scans stop after this many messages.
+    mailbox_scan_limit: int = 300
+
     # Runs the notification worker inside the API process. Turn off when a separate
     # `python -m app.worker` runs (production).
     run_worker_in_api: bool = True

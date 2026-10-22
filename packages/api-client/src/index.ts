@@ -22,6 +22,13 @@ export type AcceptResult = Schemas["AcceptResult"];
 export type NotificationItem = Schemas["NotificationOut"];
 export type UserSettings = Schemas["SettingsOut"];
 export type SimMessage = Schemas["SimMessage"];
+export type Locality = Schemas["LocalityOut"];
+export type PermitInfo = Schemas["PermitOut"];
+export type PermitFields = Schemas["PermitFields"];
+export type AuthorityInfo = Schemas["AuthorityOut"];
+export type ScanInfo = Schemas["ScanOut"];
+export type CatchUpReport = Schemas["CatchUpReport"];
+export type ReportItem = Schemas["ReportItem"];
 
 export interface ApiOptions {
   /** Empty for the web app, which reaches the API through the dev proxy / same origin. */

@@ -1182,6 +1182,65 @@
         }
       }
     },
+    "/api/v1/projects/{project_id}/suggestions/accept-all": {
+      "post": {
+        "tags": [
+          "suggestions"
+        ],
+        "summary": "Accept All",
+        "description": "Approves every suggestion that names a requirement, in dependency order.",
+        "operationId": "suggestions_accept_all",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptAll"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptAllResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/projects/{project_id}/suggestions/{suggestion_id}/accept": {
       "post": {
         "tags": [
@@ -1288,6 +1347,624 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/permits/extract": {
+      "post": {
+        "tags": [
+          "permits"
+        ],
+        "summary": "Extract Permit",
+        "description": "Reads a permit PDF before the project exists. Nothing is stored.",
+        "operationId": "permits_extract_permit",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_permits_extract_permit"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitExtraction"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/permit": {
+      "get": {
+        "tags": [
+          "permits"
+        ],
+        "summary": "Get Permit",
+        "operationId": "permits_get_permit",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "permits"
+        ],
+        "summary": "Update Permit",
+        "operationId": "permits_update_permit",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PermitUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/permit/check": {
+      "post": {
+        "tags": [
+          "permits"
+        ],
+        "summary": "Check Permit",
+        "description": "Re-runs the checks, e.g. after the permit file was uploaded.",
+        "operationId": "permits_check_permit",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/permit/confirm": {
+      "post": {
+        "tags": [
+          "permits"
+        ],
+        "summary": "Confirm Permit",
+        "description": "The person found the permit in the committee's own system.",
+        "operationId": "permits_confirm_permit",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/directory/localities": {
+      "get": {
+        "tags": [
+          "directory"
+        ],
+        "summary": "Localities",
+        "description": "Official localities matching a name, with their authority and planning committee.",
+        "operationId": "directory_localities",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LocalityOut"
+                  },
+                  "title": "Response Directory Localities"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/authorities": {
+      "get": {
+        "tags": [
+          "directory"
+        ],
+        "summary": "Project Authorities",
+        "description": "The bodies responsible for this project's area, with known contacts.",
+        "operationId": "directory_project_authorities",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuthorityOut"
+                  },
+                  "title": "Response Directory Project Authorities"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/catch-up": {
+      "post": {
+        "tags": [
+          "catch-up"
+        ],
+        "summary": "Catch Up",
+        "description": "For a project already under way: marks the required steps before `stage` as done.",
+        "operationId": "catch-up_catch_up",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatchUp"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatchUpResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/catch-up/report": {
+      "get": {
+        "tags": [
+          "catch-up"
+        ],
+        "summary": "Report",
+        "description": "What Arba found for each requirement, and which steps done so far lack documents.",
+        "operationId": "catch-up_report",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatchUpReport"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/mailbox/connect": {
+      "get": {
+        "tags": [
+          "catch-up"
+        ],
+        "summary": "Connect",
+        "description": "How to give Arba one-time, read-only access to the person's mailbox.",
+        "operationId": "catch-up_connect",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxConnect"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/mailbox/scans": {
+      "post": {
+        "tags": [
+          "catch-up"
+        ],
+        "summary": "Start Simulated Scan",
+        "description": "Scans the simulated mailbox (dev). Real mailboxes start from the provider's consent page.",
+        "operationId": "catch-up_start_simulated_scan",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/mailbox/scans/{scan_id}": {
+      "get": {
+        "tags": [
+          "catch-up"
+        ],
+        "summary": "Get Scan",
+        "operationId": "catch-up_get_scan",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "scan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Scan Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanOut"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -1769,6 +2446,47 @@
   },
   "components": {
     "schemas": {
+      "AcceptAll": {
+        "properties": {
+          "scan_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scan Id"
+          }
+        },
+        "type": "object",
+        "title": "AcceptAll"
+      },
+      "AcceptAllResult": {
+        "properties": {
+          "accepted": {
+            "type": "integer",
+            "title": "Accepted"
+          },
+          "statuses_applied": {
+            "type": "integer",
+            "title": "Statuses Applied"
+          },
+          "left": {
+            "type": "integer",
+            "title": "Left"
+          }
+        },
+        "type": "object",
+        "required": [
+          "accepted",
+          "statuses_applied",
+          "left"
+        ],
+        "title": "AcceptAllResult"
+      },
       "AcceptResult": {
         "properties": {
           "requirement_id": {
@@ -1823,6 +2541,66 @@
         "type": "object",
         "title": "AcceptSuggestion"
       },
+      "AuthorityOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "type": {
+            "$ref": "#/components/schemas/AuthorityType"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "website": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Website"
+          },
+          "permit_search_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permit Search Url"
+          },
+          "national": {
+            "type": "boolean",
+            "title": "National"
+          },
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/ContactOut"
+            },
+            "type": "array",
+            "title": "Contacts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "name",
+          "website",
+          "permit_search_url",
+          "national",
+          "contacts"
+        ],
+        "title": "AuthorityOut"
+      },
       "AuthorityType": {
         "type": "string",
         "enum": [
@@ -1843,6 +2621,20 @@
           "owner"
         ],
         "title": "AuthorityType"
+      },
+      "Body_permits_extract_permit": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_permits_extract_permit"
       },
       "BuildState": {
         "properties": {
@@ -1889,6 +2681,87 @@
         "title": "BuildState",
         "description": "Where construction stands, for progress visuals."
       },
+      "CatchUp": {
+        "properties": {
+          "stage": {
+            "type": "string",
+            "title": "Stage"
+          }
+        },
+        "type": "object",
+        "required": [
+          "stage"
+        ],
+        "title": "CatchUp"
+      },
+      "CatchUpReport": {
+        "properties": {
+          "found": {
+            "items": {
+              "$ref": "#/components/schemas/ReportItem"
+            },
+            "type": "array",
+            "title": "Found"
+          },
+          "missing": {
+            "items": {
+              "$ref": "#/components/schemas/ReportItem"
+            },
+            "type": "array",
+            "title": "Missing"
+          },
+          "pending_suggestions": {
+            "type": "integer",
+            "title": "Pending Suggestions"
+          },
+          "unsure": {
+            "type": "integer",
+            "title": "Unsure"
+          },
+          "scan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScanOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "empty",
+              "scanning",
+              "ready"
+            ],
+            "title": "State"
+          }
+        },
+        "type": "object",
+        "required": [
+          "found",
+          "missing",
+          "pending_suggestions",
+          "unsure",
+          "scan",
+          "state"
+        ],
+        "title": "CatchUpReport"
+      },
+      "CatchUpResult": {
+        "properties": {
+          "marked_done": {
+            "type": "integer",
+            "title": "Marked Done"
+          }
+        },
+        "type": "object",
+        "required": [
+          "marked_done"
+        ],
+        "title": "CatchUpResult"
+      },
       "Channel": {
         "type": "string",
         "enum": [
@@ -1933,6 +2806,103 @@
           "code"
         ],
         "title": "ConfirmWhatsApp"
+      },
+      "ContactOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "purpose": {
+            "type": "string",
+            "title": "Purpose"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/Channel"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "source": {
+            "$ref": "#/components/schemas/ContactSource"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "purpose",
+          "channel",
+          "email",
+          "phone",
+          "url",
+          "source",
+          "source_url",
+          "verified_at"
+        ],
+        "title": "ContactOut"
+      },
+      "ContactSource": {
+        "type": "string",
+        "enum": [
+          "official_site",
+          "user",
+          "learned"
+        ],
+        "title": "ContactSource"
       },
       "CriticalPath": {
         "properties": {
@@ -2171,6 +3141,84 @@
         ],
         "title": "InboxCounts"
       },
+      "LocalityOut": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "municipality_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Municipality Code"
+          },
+          "municipality": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Municipality"
+          },
+          "committee_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Committee Code"
+          },
+          "committee": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Committee"
+          },
+          "committee_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Committee Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "municipality_code",
+          "municipality",
+          "committee_code",
+          "committee",
+          "committee_source"
+        ],
+        "title": "LocalityOut"
+      },
       "LoginIn": {
         "properties": {
           "email": {
@@ -2198,6 +3246,45 @@
           "password"
         ],
         "title": "LoginIn"
+      },
+      "MailboxConnect": {
+        "properties": {
+          "provider": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MailboxProvider"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "provider",
+          "url"
+        ],
+        "title": "MailboxConnect"
+      },
+      "MailboxProvider": {
+        "type": "string",
+        "enum": [
+          "gmail",
+          "simulator"
+        ],
+        "title": "MailboxProvider"
       },
       "MeOut": {
         "properties": {
@@ -2405,6 +3492,7 @@
           "authority_request",
           "daily_digest",
           "whatsapp_connected",
+          "import_finished",
           "test"
         ],
         "title": "NotificationKind"
@@ -2550,6 +3638,422 @@
         ],
         "title": "OrganizationOut"
       },
+      "PermitCheck": {
+        "properties": {
+          "check": {
+            "type": "string",
+            "enum": [
+              "document",
+              "number",
+              "validity",
+              "committee",
+              "location"
+            ],
+            "title": "Check"
+          },
+          "ok": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ok"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "check",
+          "ok",
+          "message"
+        ],
+        "title": "PermitCheck"
+      },
+      "PermitExtraction": {
+        "properties": {
+          "fields": {
+            "$ref": "#/components/schemas/PermitFields"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "claude",
+              "rules"
+            ],
+            "title": "Source"
+          },
+          "locality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocalityOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "fields",
+          "source",
+          "locality"
+        ],
+        "title": "PermitExtraction"
+      },
+      "PermitFields": {
+        "properties": {
+          "is_permit": {
+            "type": "boolean",
+            "title": "Is Permit",
+            "default": true
+          },
+          "permit_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permit Number"
+          },
+          "request_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Number"
+          },
+          "committee": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Committee"
+          },
+          "locality": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locality"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "gush": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gush"
+          },
+          "helka": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Helka"
+          },
+          "issue_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issue Date"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          },
+          "applicants": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Applicants"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "title": "PermitFields"
+      },
+      "PermitOut": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/PermitStatus"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "request_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Number"
+          },
+          "issue_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issue Date"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          },
+          "committee_on_permit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Committee On Permit"
+          },
+          "official_committee": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Official Committee"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/PermitCheck"
+            },
+            "type": "array",
+            "title": "Checks"
+          },
+          "confirmed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmed At"
+          },
+          "search_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search Url"
+          },
+          "committee_website": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Committee Website"
+          },
+          "requirement_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requirement Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "number",
+          "request_number",
+          "issue_date",
+          "valid_until",
+          "committee_on_permit",
+          "official_committee",
+          "checks",
+          "confirmed_at",
+          "search_url",
+          "committee_website",
+          "requirement_id"
+        ],
+        "title": "PermitOut"
+      },
+      "PermitStatus": {
+        "type": "string",
+        "enum": [
+          "pending_verification",
+          "document_checked",
+          "committee_confirmed",
+          "needs_attention"
+        ],
+        "title": "PermitStatus"
+      },
+      "PermitUpdate": {
+        "properties": {
+          "permit_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permit Number"
+          },
+          "permit_request_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permit Request Number"
+          },
+          "permit_issue_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permit Issue Date"
+          },
+          "permit_valid_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permit Valid Until"
+          },
+          "permit_committee": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permit Committee"
+          }
+        },
+        "type": "object",
+        "title": "PermitUpdate"
+      },
       "Progress": {
         "properties": {
           "done": {
@@ -2581,10 +4085,27 @@
             "format": "uuid",
             "title": "Template Id"
           },
+          "locality_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locality Code"
+          },
           "municipality": {
-            "type": "string",
-            "maxLength": 200,
-            "minLength": 1,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Municipality"
           },
           "address": {
@@ -2642,6 +4163,30 @@
             ],
             "title": "Permit Number"
           },
+          "permit_request_number": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permit Request Number"
+          },
+          "permit_issue_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permit Issue Date"
+          },
           "permit_valid_until": {
             "anyOf": [
               {
@@ -2653,13 +4198,24 @@
               }
             ],
             "title": "Permit Valid Until"
+          },
+          "permit_committee": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permit Committee"
           }
         },
         "type": "object",
         "required": [
           "name",
-          "template_id",
-          "municipality"
+          "template_id"
         ],
         "title": "ProjectCreate"
       },
@@ -2757,6 +4313,31 @@
             "format": "date-time",
             "title": "Created At"
           },
+          "locality_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locality Code"
+          },
+          "municipality_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Municipality Code"
+          },
+          "permit_status": {
+            "$ref": "#/components/schemas/PermitStatus"
+          },
           "role": {
             "$ref": "#/components/schemas/ProjectRole"
           },
@@ -2769,6 +4350,9 @@
             },
             "type": "array",
             "title": "Stages"
+          },
+          "permit": {
+            "$ref": "#/components/schemas/PermitOut"
           },
           "inbox": {
             "$ref": "#/components/schemas/InboxCounts"
@@ -2790,9 +4374,13 @@
           "inbox_address",
           "status",
           "created_at",
+          "locality_code",
+          "municipality_code",
+          "permit_status",
           "role",
           "build",
           "stages",
+          "permit",
           "inbox"
         ],
         "title": "ProjectDetail"
@@ -2891,6 +4479,31 @@
             "format": "date-time",
             "title": "Created At"
           },
+          "locality_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locality Code"
+          },
+          "municipality_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Municipality Code"
+          },
+          "permit_status": {
+            "$ref": "#/components/schemas/PermitStatus"
+          },
           "role": {
             "$ref": "#/components/schemas/ProjectRole"
           },
@@ -2914,6 +4527,9 @@
           "inbox_address",
           "status",
           "created_at",
+          "locality_code",
+          "municipality_code",
+          "permit_status",
           "role",
           "build"
         ],
@@ -3027,6 +4643,52 @@
           "client_type"
         ],
         "title": "RegisterIn"
+      },
+      "ReportItem": {
+        "properties": {
+          "requirement_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Requirement Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "stage": {
+            "type": "string",
+            "title": "Stage"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RequirementStatus"
+          },
+          "required_documents": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Required Documents"
+          },
+          "documents": {
+            "type": "integer",
+            "title": "Documents"
+          },
+          "pending": {
+            "type": "integer",
+            "title": "Pending"
+          }
+        },
+        "type": "object",
+        "required": [
+          "requirement_id",
+          "title",
+          "stage",
+          "status",
+          "required_documents",
+          "documents",
+          "pending"
+        ],
+        "title": "ReportItem"
       },
       "RequirementList": {
         "properties": {
@@ -3207,6 +4869,93 @@
           "not_applicable"
         ],
         "title": "RequirementStatus"
+      },
+      "ScanOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/MailboxProvider"
+          },
+          "account_email": {
+            "type": "string",
+            "title": "Account Email"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ScanStatus"
+          },
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "messages_found": {
+            "type": "integer",
+            "title": "Messages Found"
+          },
+          "messages_imported": {
+            "type": "integer",
+            "title": "Messages Imported"
+          },
+          "files_imported": {
+            "type": "integer",
+            "title": "Files Imported"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "provider",
+          "account_email",
+          "status",
+          "query",
+          "messages_found",
+          "messages_imported",
+          "files_imported",
+          "error",
+          "created_at",
+          "finished_at"
+        ],
+        "title": "ScanOut"
+      },
+      "ScanStatus": {
+        "type": "string",
+        "enum": [
+          "running",
+          "done",
+          "failed"
+        ],
+        "title": "ScanStatus"
       },
       "SettingsOut": {
         "properties": {

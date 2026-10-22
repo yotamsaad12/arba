@@ -10,20 +10,24 @@ from app.core.enums import (
     AuthorityType,
     Channel,
     ClientType,
+    ContactSource,
     DeliveryChannel,
     DeliveryStatus,
     DependencyKind,
     DocumentSource,
     DocumentStatus,
     InboundStatus,
+    MailboxProvider,
     MessageDirection,
     MessageKind,
     NotificationKind,
     OrgRole,
+    PermitStatus,
     ProjectRole,
     ProjectStatus,
     Repeat,
     RequirementStatus,
+    ScanStatus,
     SuggestionStatus,
     Urgency,
 )
@@ -185,6 +189,27 @@ class Project(IdMixin, TimestampMixin, Base):
     inbox_address: Mapped[str] = mapped_column(sa.String(320), unique=True)
     status: Mapped[ProjectStatus] = mapped_column(default=ProjectStatus.active)
 
+    # Where it is, in official codes: drives which committee, water corporation etc. apply.
+    locality_code: Mapped[int | None] = mapped_column(sa.ForeignKey("localities.code"))
+    municipality_code: Mapped[int | None] = mapped_column(sa.ForeignKey("municipalities.code"))
+    committee_code: Mapped[str | None] = mapped_column(sa.ForeignKey("planning_committees.code"))
+
+    # Building permit: a project opens without it, but stays "pending" until it checks out.
+    permit_status: Mapped[PermitStatus] = mapped_column(
+        default=PermitStatus.pending_verification,
+        server_default=PermitStatus.pending_verification.value,
+    )
+    permit_request_number: Mapped[str | None] = mapped_column(sa.String(64))
+    permit_issue_date: Mapped[date | None]
+    # The committee as written on the permit, compared with the official one for the address.
+    permit_committee: Mapped[str | None] = mapped_column(sa.String(200))
+    # [{"check": "...", "ok": bool, "message": "..."}]
+    permit_checks: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONB, default=list, server_default="[]"
+    )
+    permit_confirmed_by: Mapped[uuid.UUID | None] = mapped_column(sa.ForeignKey("users.id"))
+    permit_confirmed_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+
     template: Mapped[Template | None] = relationship()
 
 
@@ -201,16 +226,98 @@ class ProjectMember(TimestampMixin, Base):
 
 
 class Authority(IdMixin, TimestampMixin, Base):
-    """A specific approving body, with contact details per municipality (milestone 3+)."""
+    """An approving body: a planning committee, a water corporation, a fire district…"""
 
     __tablename__ = "authorities"
+    __table_args__ = (sa.UniqueConstraint("type", "name", name="type_name"),)
 
     type: Mapped[AuthorityType]
     name: Mapped[str] = mapped_column(sa.String(200))
-    municipality: Mapped[str | None] = mapped_column(sa.String(200))
-    email: Mapped[str | None] = mapped_column(sa.String(320))
-    phone: Mapped[str | None] = mapped_column(sa.String(32))
+    website: Mapped[str | None] = mapped_column(sa.String(300))
+    # Public search for permit requests, where the committee has one.
+    permit_search_url: Mapped[str | None] = mapped_column(sa.String(500))
+    # Set for planning committees: the official planning-area code.
+    committee_code: Mapped[str | None] = mapped_column(
+        sa.ForeignKey("planning_committees.code"), unique=True
+    )
+    # Bodies that serve the whole country (e.g. Home Front Command) have no areas.
+    national: Mapped[bool] = mapped_column(default=False, server_default=sa.false())
     notes: Mapped[str | None] = mapped_column(sa.Text)
+
+
+class AuthorityArea(Base):
+    """Which local authorities a body serves."""
+
+    __tablename__ = "authority_areas"
+
+    authority_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("authorities.id", ondelete="CASCADE"), primary_key=True
+    )
+    municipality_code: Mapped[int] = mapped_column(
+        sa.ForeignKey("municipalities.code"), primary_key=True, index=True
+    )
+
+
+class AuthorityContact(IdMixin, TimestampMixin, Base):
+    """A way to reach a body for a purpose, with where it came from and when it was checked."""
+
+    __tablename__ = "authority_contacts"
+
+    authority_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("authorities.id", ondelete="CASCADE"), index=True
+    )
+    # e.g. "רישוי בנייה", "טופס 4", "חיבור מים"
+    purpose: Mapped[str] = mapped_column(sa.String(100))
+    channel: Mapped[Channel]
+    email: Mapped[str | None] = mapped_column(sa.String(320), index=True)
+    phone: Mapped[str | None] = mapped_column(sa.String(32))
+    url: Mapped[str | None] = mapped_column(sa.String(500))
+    source: Mapped[ContactSource]
+    source_url: Mapped[str | None] = mapped_column(sa.String(500))
+    verified_at: Mapped[date | None]
+    # Project the contact was learned from, if any.
+    project_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("projects.id", ondelete="SET NULL")
+    )
+    notes: Mapped[str | None] = mapped_column(sa.Text)
+
+
+# --- Official reference data (see app/scripts/sync_reference_data.py) ------------------
+
+
+class PlanningCommittee(Base):
+    __tablename__ = "planning_committees"
+
+    code: Mapped[str] = mapped_column(sa.String(16), primary_key=True)
+    name: Mapped[str] = mapped_column(sa.String(200))
+    # מקומי / מרחבי / גלילי / מיוחד
+    kind: Mapped[str] = mapped_column(sa.String(32))
+    district: Mapped[str] = mapped_column(sa.String(64))
+
+
+class Municipality(Base):
+    """A local authority: city, local council or regional council."""
+
+    __tablename__ = "municipalities"
+
+    code: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
+    name: Mapped[str] = mapped_column(sa.String(200), index=True)
+    long_name: Mapped[str] = mapped_column(sa.String(200))
+    kind: Mapped[str] = mapped_column(sa.String(32))
+    district: Mapped[str] = mapped_column(sa.String(64))
+    committee_code: Mapped[str | None] = mapped_column(sa.ForeignKey("planning_committees.code"))
+    # "planning_map" when the official map says so; "assumed" when we take the authority to be
+    # its own committee because the map doesn't list it.
+    committee_source: Mapped[str | None] = mapped_column(sa.String(16))
+
+
+class Locality(Base):
+    __tablename__ = "localities"
+
+    code: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
+    name: Mapped[str] = mapped_column(sa.String(200), index=True)
+    name_en: Mapped[str | None] = mapped_column(sa.String(200))
+    municipality_code: Mapped[int | None] = mapped_column(sa.ForeignKey("municipalities.code"))
 
 
 class Requirement(IdMixin, TimestampMixin, Base):
@@ -382,6 +489,35 @@ class Suggestion(IdMixin, TimestampMixin, Base):
     decided_by: Mapped[uuid.UUID | None] = mapped_column(sa.ForeignKey("users.id"))
     decided_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
     applied_requirement_id: Mapped[uuid.UUID | None]
+    # Set when the suggestion came from importing an existing project's mailbox.
+    scan_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("mailbox_scans.id", ondelete="SET NULL"), index=True
+    )
+
+
+class MailboxScan(IdMixin, TimestampMixin, Base):
+    """One search of a person's mailbox for an existing project's mail.
+
+    The access token is never stored: the scan runs while the person's one-time grant is
+    valid, and scanning again means granting access again.
+    """
+
+    __tablename__ = "mailbox_scans"
+
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey("users.id"))
+    provider: Mapped[MailboxProvider]
+    account_email: Mapped[str] = mapped_column(sa.String(320))
+    status: Mapped[ScanStatus] = mapped_column(default=ScanStatus.running)
+    # The mailbox search Arba ran, shown to the person.
+    query: Mapped[str] = mapped_column(sa.Text)
+    messages_found: Mapped[int] = mapped_column(default=0)
+    messages_imported: Mapped[int] = mapped_column(default=0)
+    files_imported: Mapped[int] = mapped_column(default=0)
+    error: Mapped[str | None] = mapped_column(sa.Text)
+    finished_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
 
 
 # --- Notifications --------------------------------------------------------------------

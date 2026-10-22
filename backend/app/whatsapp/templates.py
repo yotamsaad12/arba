@@ -107,7 +107,19 @@ DAILY_DIGEST = Template(
     ),
 )
 
-ALL = (VERIFY_CODE, WELCOME, APPROVAL_REQUEST, DAILY_DIGEST)
+IMPORT_FINISHED = Template(
+    name="arba_import_finished",
+    category="UTILITY",
+    body="🔎 {{1}}: Arba סיימה לסרוק את המייל.\nנמצאו {{2}}.\n{{3}}\n\nלסקירה ולאישור: {{4}}",
+    examples=(
+        "הבית ברעננה",
+        "14 מיילים ו-9 קבצים",
+        "חסרים מסמכים ל-3 שלבים שכבר בוצעו.",
+        "https://app.arba.co.il/projects/123/import",
+    ),
+)
+
+ALL = (VERIFY_CODE, WELCOME, APPROVAL_REQUEST, DAILY_DIGEST, IMPORT_FINISHED)
 BY_NAME = {t.name: t for t in ALL}
 
 

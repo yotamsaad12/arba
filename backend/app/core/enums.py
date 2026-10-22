@@ -126,6 +126,8 @@ class NotificationKind(StrEnum):
     authority_request = "authority_request"
     daily_digest = "daily_digest"
     whatsapp_connected = "whatsapp_connected"
+    # A mailbox scan of an existing project finished.
+    import_finished = "import_finished"
     # Sent from Settings to check that email and WhatsApp reach the person.
     test = "test"
 
@@ -150,3 +152,35 @@ class DeliveryStatus(StrEnum):
     failed = "failed"
     # The channel was off or not set up when it came due.
     skipped = "skipped"
+
+
+class PermitStatus(StrEnum):
+    # The project is open; the permit still has to be uploaded or checked.
+    pending_verification = "pending_verification"
+    # Arba read the permit and every automatic check passed.
+    document_checked = "document_checked"
+    # Someone confirmed the permit in the local committee's own system.
+    committee_confirmed = "committee_confirmed"
+    # A check failed (expired, wrong committee…); shown with the reasons.
+    needs_attention = "needs_attention"
+
+
+class ContactSource(StrEnum):
+    # Read from the body's official website, with the page and date recorded.
+    official_site = "official_site"
+    # Entered by a user of a project.
+    user = "user"
+    # Learned from mail that arrived from this body and was filed under a project.
+    learned = "learned"
+
+
+class MailboxProvider(StrEnum):
+    gmail = "gmail"
+    # Dev and tests: sample mail built from the project, no Google account needed.
+    simulator = "simulator"
+
+
+class ScanStatus(StrEnum):
+    running = "running"
+    done = "done"
+    failed = "failed"

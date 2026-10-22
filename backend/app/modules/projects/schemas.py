@@ -2,28 +2,42 @@ import uuid
 from datetime import date, datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.core.enums import (
     AuthorityType,
     Channel,
     ClientType,
+    PermitStatus,
     ProjectRole,
     ProjectStatus,
     RequirementStatus,
 )
+from app.modules.permits.schemas import PermitOut
 
 
 class ProjectCreate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     template_id: uuid.UUID
-    municipality: str = Field(min_length=1, max_length=200)
+    # Official locality (from /directory/localities). Sets the municipality and committee.
+    locality_code: int | None = None
+    # Free text, only when no locality is chosen.
+    municipality: str | None = Field(default=None, max_length=200)
     address: str | None = Field(default=None, max_length=300)
     floors: int = Field(default=1, ge=1, le=60)
     gush: str | None = Field(default=None, max_length=32)
     helka: str | None = Field(default=None, max_length=32)
     permit_number: str | None = Field(default=None, max_length=64)
+    permit_request_number: str | None = Field(default=None, max_length=64)
+    permit_issue_date: date | None = None
     permit_valid_until: date | None = None
+    permit_committee: str | None = Field(default=None, max_length=200)
+
+    @model_validator(mode="after")
+    def _needs_a_place(self) -> "ProjectCreate":
+        if self.locality_code is None and not self.municipality:
+            raise ValueError("choose a locality or enter a municipality")
+        return self
 
 
 class Stage(BaseModel):
@@ -74,6 +88,9 @@ class ProjectOut(BaseModel):
     inbox_address: str
     status: ProjectStatus
     created_at: datetime
+    locality_code: int | None
+    municipality_code: int | None
+    permit_status: PermitStatus
     role: ProjectRole
     build: BuildState
 
@@ -88,6 +105,7 @@ class InboxCounts(BaseModel):
 
 class ProjectDetail(ProjectOut):
     stages: list[Stage]
+    permit: PermitOut
     inbox: InboxCounts
 
 

@@ -21,11 +21,15 @@ from sqlalchemy import text  # noqa: E402
 from app.db.base import Base  # noqa: E402
 from app.db.session import SessionLocal, engine  # noqa: E402
 from app.main import app  # noqa: E402
+from app.modules.directory.reference import load_reference  # noqa: E402
 from app.modules.templates.loader import seed_templates  # noqa: E402
 
-# Everything except templates is wiped between tests.
+# Loaded once per run and kept: checklist templates and official reference data.
+_KEPT = {"municipalities", "localities", "planning_committees", "authorities", "authority_areas"}
 _PER_TEST_TABLES = [
-    t.name for t in Base.metadata.sorted_tables if not t.name.startswith("template")
+    t.name
+    for t in Base.metadata.sorted_tables
+    if not t.name.startswith("template") and t.name not in _KEPT
 ]
 
 
@@ -36,6 +40,7 @@ async def _schema() -> AsyncIterator[None]:
         await conn.run_sync(Base.metadata.create_all)
     async with SessionLocal() as db:
         await seed_templates(db)
+        await load_reference(db)
     yield
     await engine.dispose()
 
