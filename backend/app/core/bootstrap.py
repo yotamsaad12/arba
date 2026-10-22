@@ -21,11 +21,8 @@ from app.db.session import SessionLocal, make_engine
 
 log = logging.getLogger(__name__)
 
-BACKEND = Path(__file__).resolve().parents[2]
-DATA_DIRS = [
-    BACKEND / "app" / "modules" / "templates" / "data",
-    BACKEND / "app" / "modules" / "directory" / "data",
-]
+APP = Path(__file__).resolve().parents[1]
+DATA_DIRS = [APP / "modules" / "templates" / "data", APP / "modules" / "directory" / "data"]
 _LOCK_ID = 727_4  # arbitrary, constant across deploys
 _ready = False
 _guard = asyncio.Lock()
@@ -42,8 +39,9 @@ def data_fingerprint() -> str:
 
 
 def _migrate(url: str) -> None:
-    config = Config(str(BACKEND / "alembic.ini"))
-    config.set_main_option("script_location", str(BACKEND / "app" / "db" / "migrations"))
+    # No alembic.ini: the package may be installed without it (Vercel).
+    config = Config()
+    config.set_main_option("script_location", str(APP / "db" / "migrations"))
     config.attributes["url"] = url
     command.upgrade(config, "head")
 

@@ -1,18 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npm ci",
-  "buildCommand": "npm run build",
-  "outputDirectory": "apps/web/dist",
-  "functions": {
-    "api/index.py": {
-      "includeFiles": "backend/{app/**,alembic.ini}",
-      "excludeFiles": "backend/**/{__pycache__,tests,.venv,.storage}/**",
-      "maxDuration": 300
-    }
-  },
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index" },
-    { "source": "/(.*)", "destination": "/index.html" }
+  "builds": [
+    { "src": "package.json", "use": "@vercel/static-build", "config": { "distDir": "apps/web/dist" } },
+    { "src": "api/index.py", "use": "@vercel/python" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/index.py" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ],
   "crons": [{ "path": "/api/v1/cron/tick", "schedule": "0 5 * * *" }]
 }

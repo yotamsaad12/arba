@@ -1,5 +1,5 @@
 [project]
-name = "arba-backend"
+name = "backend"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
@@ -13,7 +13,6 @@ dependencies = [
     "pyjwt>=2.10",
     "pwdlib[argon2]>=0.2",
     "pyyaml>=6.0",
-    "boto3>=1.35",
     "anthropic>=2.0",
     "httpx>=0.28",
     "pypdf>=5.0",
@@ -21,7 +20,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# S3 file storage (ARBA_STORAGE_BACKEND=s3).
+s3 = ["boto3>=1.35"]
 dev = [
+    "boto3>=1.35",
     "pytest>=8.3",
     "pytest-asyncio>=0.24",
     "httpx>=0.28",
@@ -41,6 +43,8 @@ include = ["app*"]
 [tool.setuptools.package-data]
 "app.modules.templates" = ["data/*.yaml"]
 "app.modules.directory" = ["data/*.yaml", "data/*.json"]
+# Migrations ship with the package: the serverless API runs them itself.
+"app.db" = ["migrations/*.py", "migrations/*.mako", "migrations/versions/*.py"]
 
 [tool.ruff]
 line-length = 100
