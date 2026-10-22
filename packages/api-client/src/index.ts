@@ -19,6 +19,9 @@ export type MessageOut = Schemas["MessageOut"];
 export type DocumentOut = Schemas["DocumentOut"];
 export type Suggestion = Schemas["SuggestionOut"];
 export type AcceptResult = Schemas["AcceptResult"];
+export type NotificationItem = Schemas["NotificationOut"];
+export type UserSettings = Schemas["SettingsOut"];
+export type SimMessage = Schemas["SimMessage"];
 
 export interface ApiOptions {
   /** Empty for the web app, which reaches the API through the dev proxy / same origin. */

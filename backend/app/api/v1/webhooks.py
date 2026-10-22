@@ -3,9 +3,11 @@ import json
 import logging
 import secrets
 import uuid
+from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request
+from fastapi.responses import PlainTextResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -17,7 +19,11 @@ from app.core.storage import get_storage
 from app.db.models import InboundEmail
 from app.db.session import SessionLocal
 from app.email.processing import process_inbound, raw_key
+from app.modules.notifications.whatsapp_actions import handle as handle_whatsapp
 from app.modules.suggestions.service import get_classifier, suggest_for_message
+from app.whatsapp.client import get_whatsapp
+from app.whatsapp.webhook import Incoming, StatusUpdate, valid_signature
+from app.whatsapp.webhook import parse as parse_whatsapp
 
 log = logging.getLogger(__name__)
 router = APIRouter(prefix="/webhooks", tags=["webhooks"], include_in_schema=False)
@@ -91,3 +97,37 @@ async def _process(inbound_id: uuid.UUID) -> None:
             await suggest_for_message(db, storage, get_classifier(), message_id)
         except Exception:
             log.exception("could not suggest filing for message %s", message_id)
+
+
+@router.get("/whatsapp", response_class=PlainTextResponse)
+async def whatsapp_verify(
+    mode: Annotated[str, Query(alias="hub.mode")] = "",
+    token: Annotated[str, Query(alias="hub.verify_token")] = "",
+    challenge: Annotated[str, Query(alias="hub.challenge")] = "",
+) -> str:
+    """Meta calls this once when the webhook URL is registered."""
+    if mode == "subscribe" and secrets.compare_digest(token, settings.whatsapp_verify_token):
+        return challenge
+    raise AppError(403, "forbidden", "verify token mismatch")
+
+
+@router.post("/whatsapp")
+async def whatsapp_events(request: Request, background: BackgroundTasks) -> dict[str, str]:
+    body = await request.body()
+    if not valid_signature(body, request.headers.get("x-hub-signature-256")):
+        raise AppError(401, "unauthenticated", "invalid signature")
+    try:
+        events = parse_whatsapp(json.loads(body))
+    except ValueError as exc:
+        raise AppError(400, "invalid_payload", "body is not JSON") from exc
+    # Answer Meta right away; replies (which call the Graph API) go out after the response.
+    background.add_task(_handle_whatsapp, events)
+    return {"status": "ok"}
+
+
+async def _handle_whatsapp(events: list[Incoming | StatusUpdate]) -> None:
+    sender = get_whatsapp()
+    if sender is None:
+        return
+    async with SessionLocal() as db:
+        await handle_whatsapp(db, events, sender, datetime.now(UTC))

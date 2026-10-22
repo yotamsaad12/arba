@@ -10,18 +10,22 @@ from app.core.enums import (
     AuthorityType,
     Channel,
     ClientType,
+    DeliveryChannel,
+    DeliveryStatus,
     DependencyKind,
     DocumentSource,
     DocumentStatus,
     InboundStatus,
     MessageDirection,
     MessageKind,
+    NotificationKind,
     OrgRole,
     ProjectRole,
     ProjectStatus,
     Repeat,
     RequirementStatus,
     SuggestionStatus,
+    Urgency,
 )
 from app.db.base import Base, IdMixin, TimestampMixin
 
@@ -42,6 +46,27 @@ class User(IdMixin, TimestampMixin, Base):
     email: Mapped[str] = mapped_column(sa.String(320), unique=True)
     phone: Mapped[str | None] = mapped_column(sa.String(32))
     password_hash: Mapped[str] = mapped_column(sa.String(255))
+
+    # Notification preferences.
+    notify_email: Mapped[bool] = mapped_column(default=True, server_default=sa.true())
+    notify_whatsapp: Mapped[bool] = mapped_column(default=True, server_default=sa.true())
+    quiet_nights: Mapped[bool] = mapped_column(default=True, server_default=sa.true())
+    quiet_shabbat: Mapped[bool] = mapped_column(default=True, server_default=sa.true())
+    # Local hour (Israel time) for the morning summary.
+    digest_hour: Mapped[int] = mapped_column(default=7, server_default="7")
+
+    # WhatsApp: set only after the person confirmed a code sent to this number.
+    whatsapp_phone: Mapped[str | None] = mapped_column(sa.String(20), unique=True)
+    whatsapp_verified_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+    whatsapp_opted_out_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+    # Last message they sent us. Within 24 hours free-form replies are allowed.
+    whatsapp_last_inbound_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+
+    @property
+    def whatsapp_active(self) -> bool:
+        return bool(
+            self.whatsapp_phone and self.whatsapp_verified_at and not self.whatsapp_opted_out_at
+        )
 
 
 class Membership(TimestampMixin, Base):
@@ -357,6 +382,93 @@ class Suggestion(IdMixin, TimestampMixin, Base):
     decided_by: Mapped[uuid.UUID | None] = mapped_column(sa.ForeignKey("users.id"))
     decided_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
     applied_requirement_id: Mapped[uuid.UUID | None]
+
+
+# --- Notifications --------------------------------------------------------------------
+
+
+class PhoneVerification(IdMixin, Base):
+    __tablename__ = "phone_verifications"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    phone: Mapped[str] = mapped_column(sa.String(20))
+    code_hash: Mapped[str] = mapped_column(sa.String(64))
+    attempts: Mapped[int] = mapped_column(default=0)
+    expires_at: Mapped[datetime] = mapped_column(sa.DateTime(timezone=True))
+    verified_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        sa.DateTime(timezone=True), server_default=sa.func.now()
+    )
+
+
+class Notification(IdMixin, Base):
+    """Something a person should know or do. Always shown in the app; pushed by channel."""
+
+    __tablename__ = "notifications"
+    __table_args__ = (sa.UniqueConstraint("user_id", "dedupe_key", name="user_dedupe"),)
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    project_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
+    kind: Mapped[NotificationKind]
+    urgency: Mapped[Urgency]
+    title: Mapped[str] = mapped_column(sa.String(200))
+    body: Mapped[str] = mapped_column(sa.Text)
+    # Path inside the web app, e.g. /projects/<id>?tab=inbox&thread=<id>.
+    action_path: Mapped[str | None] = mapped_column(sa.String(300))
+    suggestion_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("suggestions.id", ondelete="SET NULL")
+    )
+    # WhatsApp template name and parameters, so a delivery can be retried as-is.
+    whatsapp: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    dedupe_key: Mapped[str | None] = mapped_column(sa.String(200))
+    read_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        sa.DateTime(timezone=True), server_default=sa.func.now(), index=True
+    )
+
+
+class Delivery(IdMixin, Base):
+    __tablename__ = "deliveries"
+    __table_args__ = (
+        sa.UniqueConstraint("notification_id", "channel", name="notification_channel"),
+    )
+
+    notification_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("notifications.id", ondelete="CASCADE"), index=True
+    )
+    channel: Mapped[DeliveryChannel]
+    status: Mapped[DeliveryStatus] = mapped_column(default=DeliveryStatus.queued, index=True)
+    due_at: Mapped[datetime] = mapped_column(sa.DateTime(timezone=True), index=True)
+    attempts: Mapped[int] = mapped_column(default=0)
+    provider_message_id: Mapped[str | None] = mapped_column(sa.String(200), index=True)
+    error: Mapped[str | None] = mapped_column(sa.Text)
+    sent_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(
+        sa.DateTime(timezone=True), server_default=sa.func.now(), onupdate=sa.func.now()
+    )
+
+
+class SimulatedWhatsApp(IdMixin, Base):
+    """Messages of the dev WhatsApp simulator, in both directions."""
+
+    __tablename__ = "simulated_whatsapp"
+
+    phone: Mapped[str] = mapped_column(sa.String(20), index=True)
+    direction: Mapped[str] = mapped_column(sa.String(8))
+    text: Mapped[str] = mapped_column(sa.Text)
+    # [{"id": "...", "title": "..."}] for messages with reply buttons.
+    buttons: Mapped[list[dict[str, str]]] = mapped_column(JSONB, default=list)
+    provider_message_id: Mapped[str] = mapped_column(sa.String(64))
+    status: Mapped[str] = mapped_column(sa.String(16), default="delivered")
+    created_at: Mapped[datetime] = mapped_column(
+        sa.DateTime(timezone=True), server_default=sa.func.now()
+    )
 
 
 # --- Audit ----------------------------------------------------------------------------

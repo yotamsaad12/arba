@@ -23,6 +23,7 @@ export function ProjectsPage() {
       <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
         {t("projects.title")}
       </h1>
+      <ConnectWhatsAppCta />
       {projects.length === 0 && <p className="text-lg text-ink-soft">{t("projects.empty")}</p>}
       <div className="grid gap-6 sm:grid-cols-2">
         {projects.map((p, i) => (
@@ -93,5 +94,37 @@ function ProjectCard({ project: p }: { project: Project }) {
         )}
       </div>
     </Link>
+  );
+}
+
+/** Nudges people to connect WhatsApp: it's where Arba saves them the most work. */
+function ConnectWhatsAppCta() {
+  const { t } = useTranslation();
+  const { data } = $api.useQuery("get", "/api/v1/me/settings");
+  if (!data || !data.whatsapp_available || data.whatsapp.connected) return null;
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex flex-wrap items-center gap-4 rounded-2xl border-2 border-ink bg-[#e7fbe9] p-4 shadow-[4px_4px_0_0_var(--color-ink)]"
+    >
+      <motion.span
+        className="text-4xl"
+        animate={{ rotate: [0, -10, 10, 0] }}
+        transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 3 }}
+      >
+        💬
+      </motion.span>
+      <div className="min-w-0 flex-1">
+        <div className="font-display text-lg font-bold">{t("settings.connectCta")}</div>
+        <div className="text-sm text-ink-soft">{t("settings.connectCtaHint")}</div>
+      </div>
+      <Link
+        to="/settings"
+        className="rounded-full bg-ink px-5 py-2.5 font-medium text-white shadow-[3px_3px_0_0_var(--color-accent)] transition-transform hover:-translate-y-0.5"
+      >
+        {t("settings.connectCtaButton")}
+      </Link>
+    </motion.div>
   );
 }

@@ -6,6 +6,8 @@ os.environ["ARBA_ENV"] = "test"
 os.environ["ARBA_STORAGE_DIR"] = tempfile.mkdtemp(prefix="arba-test-storage-")
 # Deterministic filing suggestions; the Claude path is tested with a fake client.
 os.environ["ARBA_AI_PROVIDER"] = "rules"
+os.environ["ARBA_EMAIL_BACKEND"] = "console"
+os.environ["ARBA_WHATSAPP_PROVIDER"] = "simulator"
 os.environ.setdefault(
     "ARBA_DATABASE_URL", "postgresql+asyncpg://arba:arba@localhost:5432/arba_test"
 )

@@ -8,6 +8,7 @@ import { demoModel } from "../scene/model";
 import { LiveWorld } from "../world/LiveWorld";
 import { useAuthorities } from "../world/authorities";
 import { Logo } from "./Logo";
+import { NotificationBell } from "./NotificationBell";
 import { Button } from "./ui";
 
 export function AppLayout() {
@@ -26,13 +27,18 @@ export function AppLayout() {
             <Logo />
           </Link>
           <div className="flex items-center gap-2 text-sm text-ink-soft">
+            <NotificationBell />
             {me.data && (
-              <span className="hidden items-center gap-2 sm:flex">
-                <span className="grid size-8 place-items-center rounded-full border-2 border-ink bg-accent-soft font-display font-bold text-ink">
+              <Link
+                to="/settings"
+                title={t("settings.title")}
+                className="flex items-center gap-2 rounded-full p-0.5 transition-transform hover:-translate-y-0.5"
+              >
+                <span className="grid size-9 place-items-center rounded-full border-2 border-ink bg-accent-soft font-display font-bold text-ink">
                   {me.data.name.trim().charAt(0)}
                 </span>
-                {me.data.name}
-              </span>
+                <span className="hidden sm:inline">{me.data.name}</span>
+              </Link>
             )}
             <Button variant="ghost" size="sm" onClick={() => void signOut()}>
               {t("app.logout")}

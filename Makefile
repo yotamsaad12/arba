@@ -1,4 +1,4 @@
-.PHONY: setup up down migrate seed api web test typecheck api-client test-email
+.PHONY: setup up down migrate seed api web worker test typecheck api-client test-email
 
 COMPOSE = docker compose -f infra/docker-compose.yml
 PY = backend/.venv/bin
@@ -21,6 +21,9 @@ seed:  ## Load checklist templates (safe to re-run)
 
 api:  ## FastAPI on http://localhost:8000 (docs at /docs)
 	cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000
+
+worker:  ## Notification worker (production-style; in dev the API runs it already)
+	cd backend && ARBA_RUN_WORKER_IN_API=false .venv/bin/python -m app.worker
 
 web:  ## Web app on http://localhost:5180
 	npm run dev:web

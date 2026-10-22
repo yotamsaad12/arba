@@ -1301,6 +1301,470 @@
           }
         }
       }
+    },
+    "/api/v1/me/settings": {
+      "get": {
+        "tags": [
+          "me"
+        ],
+        "summary": "Get Settings",
+        "operationId": "me_get_settings",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "me"
+        ],
+        "summary": "Update Settings",
+        "operationId": "me_update_settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/whatsapp/start": {
+      "post": {
+        "tags": [
+          "me"
+        ],
+        "summary": "Start Whatsapp",
+        "description": "Sends a 6-digit code to the number on WhatsApp.",
+        "operationId": "me_start_whatsapp",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartWhatsApp"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodeSent"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/whatsapp/confirm": {
+      "post": {
+        "tags": [
+          "me"
+        ],
+        "summary": "Confirm Whatsapp",
+        "operationId": "me_confirm_whatsapp",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmWhatsApp"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/whatsapp": {
+      "delete": {
+        "tags": [
+          "me"
+        ],
+        "summary": "Disconnect Whatsapp",
+        "operationId": "me_disconnect_whatsapp",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/notifications": {
+      "get": {
+        "tags": [
+          "me"
+        ],
+        "summary": "List Notifications",
+        "operationId": "me_list_notifications",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 30,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/notifications/test": {
+      "post": {
+        "tags": [
+          "me"
+        ],
+        "summary": "Send Test",
+        "description": "Sends a test notification now, on every channel the person has on, ignoring quiet hours.",
+        "operationId": "me_send_test",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DeliveryOut"
+                  },
+                  "type": "array",
+                  "title": "Response Me Send Test"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/notifications/{notification_id}/read": {
+      "post": {
+        "tags": [
+          "me"
+        ],
+        "summary": "Read Notification",
+        "operationId": "me_read_notification",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "notification_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Notification Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/notifications/read-all": {
+      "post": {
+        "tags": [
+          "me"
+        ],
+        "summary": "Read All",
+        "operationId": "me_read_all",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/dev/whatsapp/chats": {
+      "get": {
+        "tags": [
+          "dev"
+        ],
+        "summary": "Chats",
+        "operationId": "dev_chats",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SimChat"
+                  },
+                  "type": "array",
+                  "title": "Response Dev Chats"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/dev/whatsapp/chats/{phone}": {
+      "get": {
+        "tags": [
+          "dev"
+        ],
+        "summary": "Messages",
+        "operationId": "dev_messages",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "phone",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Phone"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SimMessage"
+                  },
+                  "title": "Response Dev Messages"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dev/whatsapp/chats/{phone}/send": {
+      "post": {
+        "tags": [
+          "dev"
+        ],
+        "summary": "Send",
+        "description": "Plays the person's side: a typed message or a button press, handled exactly like\nMeta's webhook would deliver it.",
+        "operationId": "dev_send",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "phone",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Phone"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimSend"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SimMessage"
+                  },
+                  "title": "Response Dev Send"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1442,6 +1906,34 @@
         ],
         "title": "ClientType"
       },
+      "CodeSent": {
+        "properties": {
+          "phone": {
+            "type": "string",
+            "title": "Phone"
+          }
+        },
+        "type": "object",
+        "required": [
+          "phone"
+        ],
+        "title": "CodeSent"
+      },
+      "ConfirmWhatsApp": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 8,
+            "minLength": 4,
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "ConfirmWhatsApp"
+      },
       "CriticalPath": {
         "properties": {
           "requirement_ids": {
@@ -1463,6 +1955,53 @@
           "remaining_days"
         ],
         "title": "CriticalPath"
+      },
+      "DeliveryChannel": {
+        "type": "string",
+        "enum": [
+          "email",
+          "whatsapp"
+        ],
+        "title": "DeliveryChannel"
+      },
+      "DeliveryOut": {
+        "properties": {
+          "channel": {
+            "$ref": "#/components/schemas/DeliveryChannel"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DeliveryStatus"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "channel",
+          "status"
+        ],
+        "title": "DeliveryOut"
+      },
+      "DeliveryStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "sent",
+          "delivered",
+          "read",
+          "failed",
+          "skipped"
+        ],
+        "title": "DeliveryStatus"
       },
       "DocumentOut": {
         "properties": {
@@ -1858,6 +2397,122 @@
           "progress"
         ],
         "title": "NextSteps"
+      },
+      "NotificationKind": {
+        "type": "string",
+        "enum": [
+          "approval_needed",
+          "authority_request",
+          "daily_digest",
+          "whatsapp_connected",
+          "test"
+        ],
+        "title": "NotificationKind"
+      },
+      "NotificationList": {
+        "properties": {
+          "unread": {
+            "type": "integer",
+            "title": "Unread"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationOut"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "unread",
+          "items"
+        ],
+        "title": "NotificationList"
+      },
+      "NotificationOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/NotificationKind"
+          },
+          "urgency": {
+            "$ref": "#/components/schemas/Urgency"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body"
+          },
+          "action_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action Path"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "read_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Read At"
+          },
+          "deliveries": {
+            "items": {
+              "$ref": "#/components/schemas/DeliveryOut"
+            },
+            "type": "array",
+            "title": "Deliveries"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "urgency",
+          "title",
+          "body",
+          "action_path",
+          "project_id",
+          "created_at",
+          "read_at",
+          "deliveries"
+        ],
+        "title": "NotificationOut"
       },
       "OrgRole": {
         "type": "string",
@@ -2553,6 +3208,236 @@
         ],
         "title": "RequirementStatus"
       },
+      "SettingsOut": {
+        "properties": {
+          "notify_email": {
+            "type": "boolean",
+            "title": "Notify Email"
+          },
+          "notify_whatsapp": {
+            "type": "boolean",
+            "title": "Notify Whatsapp"
+          },
+          "quiet_nights": {
+            "type": "boolean",
+            "title": "Quiet Nights"
+          },
+          "quiet_shabbat": {
+            "type": "boolean",
+            "title": "Quiet Shabbat"
+          },
+          "digest_hour": {
+            "type": "integer",
+            "title": "Digest Hour"
+          },
+          "whatsapp": {
+            "$ref": "#/components/schemas/WhatsAppStatus"
+          },
+          "whatsapp_available": {
+            "type": "boolean",
+            "title": "Whatsapp Available"
+          },
+          "whatsapp_simulator": {
+            "type": "boolean",
+            "title": "Whatsapp Simulator"
+          }
+        },
+        "type": "object",
+        "required": [
+          "notify_email",
+          "notify_whatsapp",
+          "quiet_nights",
+          "quiet_shabbat",
+          "digest_hour",
+          "whatsapp",
+          "whatsapp_available",
+          "whatsapp_simulator"
+        ],
+        "title": "SettingsOut"
+      },
+      "SettingsUpdate": {
+        "properties": {
+          "notify_email": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notify Email"
+          },
+          "notify_whatsapp": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notify Whatsapp"
+          },
+          "quiet_nights": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quiet Nights"
+          },
+          "quiet_shabbat": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quiet Shabbat"
+          },
+          "digest_hour": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 12.0,
+                "minimum": 5.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Digest Hour"
+          }
+        },
+        "type": "object",
+        "title": "SettingsUpdate"
+      },
+      "SimChat": {
+        "properties": {
+          "phone": {
+            "type": "string",
+            "title": "Phone"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "last_text": {
+            "type": "string",
+            "title": "Last Text"
+          },
+          "last_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "phone",
+          "name",
+          "last_text",
+          "last_at"
+        ],
+        "title": "SimChat"
+      },
+      "SimMessage": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "in",
+              "out"
+            ],
+            "title": "Direction"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "buttons": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Buttons"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "direction",
+          "text",
+          "buttons",
+          "created_at"
+        ],
+        "title": "SimMessage"
+      },
+      "SimSend": {
+        "properties": {
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          },
+          "button_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Button Id"
+          },
+          "button_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Button Title"
+          }
+        },
+        "type": "object",
+        "title": "SimSend"
+      },
       "Stage": {
         "properties": {
           "key": {
@@ -2621,6 +3506,27 @@
           "skipped"
         ],
         "title": "StageProgress"
+      },
+      "StartWhatsApp": {
+        "properties": {
+          "phone": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 6,
+            "title": "Phone"
+          },
+          "consent": {
+            "type": "boolean",
+            "const": true,
+            "title": "Consent"
+          }
+        },
+        "type": "object",
+        "required": [
+          "phone",
+          "consent"
+        ],
+        "title": "StartWhatsApp"
       },
       "StatusUpdate": {
         "properties": {
@@ -3150,6 +4056,14 @@
         ],
         "title": "UploadTarget"
       },
+      "Urgency": {
+        "type": "string",
+        "enum": [
+          "urgent",
+          "normal"
+        ],
+        "title": "Urgency"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -3189,6 +4103,36 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WhatsAppStatus": {
+        "properties": {
+          "connected": {
+            "type": "boolean",
+            "title": "Connected"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "opted_out": {
+            "type": "boolean",
+            "title": "Opted Out"
+          }
+        },
+        "type": "object",
+        "required": [
+          "connected",
+          "phone",
+          "opted_out"
+        ],
+        "title": "WhatsAppStatus"
       }
     },
     "securitySchemes": {

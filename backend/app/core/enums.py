@@ -119,3 +119,34 @@ class SuggestionStatus(StrEnum):
     dismissed = "dismissed"
     # A newer message in the same thread replaced it.
     superseded = "superseded"
+
+
+class NotificationKind(StrEnum):
+    approval_needed = "approval_needed"
+    authority_request = "authority_request"
+    daily_digest = "daily_digest"
+    whatsapp_connected = "whatsapp_connected"
+    # Sent from Settings to check that email and WhatsApp reach the person.
+    test = "test"
+
+
+class Urgency(StrEnum):
+    # Pushed right away (or when the person's quiet hours end).
+    urgent = "urgent"
+    # Not pushed: shown in the app and included in the next morning summary.
+    normal = "normal"
+
+
+class DeliveryChannel(StrEnum):
+    email = "email"
+    whatsapp = "whatsapp"
+
+
+class DeliveryStatus(StrEnum):
+    queued = "queued"
+    sent = "sent"
+    delivered = "delivered"
+    read = "read"
+    failed = "failed"
+    # The channel was off or not set up when it came due.
+    skipped = "skipped"

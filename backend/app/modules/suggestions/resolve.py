@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import SuggestionStatus
 from app.db.models import Suggestion, User
+from app.modules.notifications.service import resolve_for_suggestion
 
 
 async def resolve_pending(
@@ -39,3 +40,4 @@ async def resolve_pending(
         suggestion.decided_by = user.id
         suggestion.decided_at = now
         suggestion.applied_requirement_id = requirement_id
+        await resolve_for_suggestion(db, suggestion.id)

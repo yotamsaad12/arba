@@ -383,6 +383,204 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Settings */
+        get: operations["me_get_settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Settings */
+        patch: operations["me_update_settings"];
+        trace?: never;
+    };
+    "/api/v1/me/whatsapp/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Whatsapp
+         * @description Sends a 6-digit code to the number on WhatsApp.
+         */
+        post: operations["me_start_whatsapp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/whatsapp/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Whatsapp */
+        post: operations["me_confirm_whatsapp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/whatsapp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Disconnect Whatsapp */
+        delete: operations["me_disconnect_whatsapp"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Notifications */
+        get: operations["me_list_notifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notifications/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send Test
+         * @description Sends a test notification now, on every channel the person has on, ignoring quiet hours.
+         */
+        post: operations["me_send_test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notifications/{notification_id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Read Notification */
+        post: operations["me_read_notification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Read All */
+        post: operations["me_read_all"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dev/whatsapp/chats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Chats */
+        get: operations["dev_chats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dev/whatsapp/chats/{phone}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Messages */
+        get: operations["dev_messages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dev/whatsapp/chats/{phone}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send
+         * @description Plays the person's side: a typed message or a button press, handled exactly like
+         *     Meta's webhook would deliver it.
+         */
+        post: operations["dev_send"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -437,6 +635,16 @@ export interface components {
          * @enum {string}
          */
         ClientType: "business" | "private";
+        /** CodeSent */
+        CodeSent: {
+            /** Phone */
+            phone: string;
+        };
+        /** ConfirmWhatsApp */
+        ConfirmWhatsApp: {
+            /** Code */
+            code: string;
+        };
         /** CriticalPath */
         CriticalPath: {
             /** Requirement Ids */
@@ -444,6 +652,23 @@ export interface components {
             /** Remaining Days */
             remaining_days: number;
         };
+        /**
+         * DeliveryChannel
+         * @enum {string}
+         */
+        DeliveryChannel: "email" | "whatsapp";
+        /** DeliveryOut */
+        DeliveryOut: {
+            channel: components["schemas"]["DeliveryChannel"];
+            status: components["schemas"]["DeliveryStatus"];
+            /** Error */
+            error?: string | null;
+        };
+        /**
+         * DeliveryStatus
+         * @enum {string}
+         */
+        DeliveryStatus: "queued" | "sent" | "delivered" | "read" | "failed" | "skipped";
         /** DocumentOut */
         DocumentOut: {
             /**
@@ -585,6 +810,45 @@ export interface components {
             blocked: components["schemas"]["RequirementOut"][];
             critical_path: components["schemas"]["CriticalPath"];
             progress: components["schemas"]["Progress"];
+        };
+        /**
+         * NotificationKind
+         * @enum {string}
+         */
+        NotificationKind: "approval_needed" | "authority_request" | "daily_digest" | "whatsapp_connected" | "test";
+        /** NotificationList */
+        NotificationList: {
+            /** Unread */
+            unread: number;
+            /** Items */
+            items: components["schemas"]["NotificationOut"][];
+        };
+        /** NotificationOut */
+        NotificationOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            kind: components["schemas"]["NotificationKind"];
+            urgency: components["schemas"]["Urgency"];
+            /** Title */
+            title: string;
+            /** Body */
+            body: string;
+            /** Action Path */
+            action_path: string | null;
+            /** Project Id */
+            project_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Read At */
+            read_at: string | null;
+            /** Deliveries */
+            deliveries: components["schemas"]["DeliveryOut"][];
         };
         /**
          * OrgRole
@@ -811,6 +1075,84 @@ export interface components {
          * @enum {string}
          */
         RequirementStatus: "not_started" | "blocked" | "ready" | "in_progress" | "waiting_for_authority" | "needs_fix" | "done" | "not_applicable";
+        /** SettingsOut */
+        SettingsOut: {
+            /** Notify Email */
+            notify_email: boolean;
+            /** Notify Whatsapp */
+            notify_whatsapp: boolean;
+            /** Quiet Nights */
+            quiet_nights: boolean;
+            /** Quiet Shabbat */
+            quiet_shabbat: boolean;
+            /** Digest Hour */
+            digest_hour: number;
+            whatsapp: components["schemas"]["WhatsAppStatus"];
+            /** Whatsapp Available */
+            whatsapp_available: boolean;
+            /** Whatsapp Simulator */
+            whatsapp_simulator: boolean;
+        };
+        /** SettingsUpdate */
+        SettingsUpdate: {
+            /** Notify Email */
+            notify_email?: boolean | null;
+            /** Notify Whatsapp */
+            notify_whatsapp?: boolean | null;
+            /** Quiet Nights */
+            quiet_nights?: boolean | null;
+            /** Quiet Shabbat */
+            quiet_shabbat?: boolean | null;
+            /** Digest Hour */
+            digest_hour?: number | null;
+        };
+        /** SimChat */
+        SimChat: {
+            /** Phone */
+            phone: string;
+            /** Name */
+            name: string | null;
+            /** Last Text */
+            last_text: string;
+            /**
+             * Last At
+             * Format: date-time
+             */
+            last_at: string;
+        };
+        /** SimMessage */
+        SimMessage: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Direction
+             * @enum {string}
+             */
+            direction: "in" | "out";
+            /** Text */
+            text: string;
+            /** Buttons */
+            buttons: {
+                [key: string]: string;
+            }[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** SimSend */
+        SimSend: {
+            /** Text */
+            text?: string | null;
+            /** Button Id */
+            button_id?: string | null;
+            /** Button Title */
+            button_title?: string | null;
+        };
         /** Stage */
         Stage: {
             /** Key */
@@ -832,6 +1174,16 @@ export interface components {
             total: number;
             /** Skipped */
             skipped: number;
+        };
+        /** StartWhatsApp */
+        StartWhatsApp: {
+            /** Phone */
+            phone: string;
+            /**
+             * Consent
+             * @constant
+             */
+            consent: true;
         };
         /** StatusUpdate */
         StatusUpdate: {
@@ -1013,6 +1365,11 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /**
+         * Urgency
+         * @enum {string}
+         */
+        Urgency: "urgent" | "normal";
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -1025,6 +1382,15 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** WhatsAppStatus */
+        WhatsAppStatus: {
+            /** Connected */
+            connected: boolean;
+            /** Phone */
+            phone: string | null;
+            /** Opted Out */
+            opted_out: boolean;
         };
     };
     responses: never;
@@ -1802,6 +2168,327 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    me_get_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsOut"];
+                };
+            };
+        };
+    };
+    me_update_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SettingsUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    me_start_whatsapp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartWhatsApp"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodeSent"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    me_confirm_whatsapp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmWhatsApp"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    me_disconnect_whatsapp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    me_list_notifications: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    me_send_test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryOut"][];
+                };
+            };
+        };
+    };
+    me_read_notification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notification_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    me_read_all: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    dev_chats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimChat"][];
+                };
+            };
+        };
+    };
+    dev_messages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                phone: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimMessage"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dev_send: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                phone: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SimSend"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimMessage"][];
+                };
             };
             /** @description Validation Error */
             422: {

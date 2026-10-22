@@ -9,6 +9,8 @@ import { NewProjectPage } from "./pages/NewProject";
 import { ProjectPage } from "./pages/Project";
 import { ProjectsPage } from "./pages/Projects";
 import { RegisterPage } from "./pages/Register";
+import { SettingsPage } from "./pages/Settings";
+import { WhatsAppSimulatorPage } from "./pages/WhatsAppSimulator";
 
 export function App() {
   const { t } = useTranslation();
@@ -31,6 +33,8 @@ export function App() {
             <Route index element={<ProjectsPage />} />
             <Route path="/projects/new" element={<NewProjectPage />} />
             <Route path="/projects/:projectId" element={<ProjectPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/dev/whatsapp" element={<WhatsAppSimulatorPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

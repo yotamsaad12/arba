@@ -44,6 +44,19 @@ to and what status to set. People approve it with one click or pick something el
 - Without a key, a built-in rules engine suggests from the sender, subject and file names.
 - `ARBA_AI_PROVIDER=rules|claude|auto` forces one or the other.
 
+### Notifications and WhatsApp
+
+Arba pushes what people need to do: urgent items right away (outside each person's quiet hours,
+including Shabbat), everything else in one morning summary. Channels: in-app bell, email
+(Mailpit at http://localhost:8025 in dev) and WhatsApp, where approval requests come with
+"approve" / "change" buttons.
+
+- In dev, WhatsApp runs against a simulator: connect a number in Settings, then open
+  http://localhost:5180/dev/whatsapp to see the messages and press the buttons.
+- The notification worker runs inside the API in dev. In production run `python -m app.worker`
+  and set `ARBA_RUN_WORKER_IN_API=false`.
+- Going live with real WhatsApp: [docs/whatsapp-setup.md](docs/whatsapp-setup.md).
+
 ## Layout
 
 ```

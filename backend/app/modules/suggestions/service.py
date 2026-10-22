@@ -27,6 +27,8 @@ from app.db.models import (
 )
 from app.modules.documents import service as documents
 from app.modules.inbox import service as inbox
+from app.modules.notifications import triggers
+from app.modules.notifications.service import resolve_for_suggestion
 from app.modules.projects.schemas import stages_of
 from app.modules.requirements.service import change_status
 from app.modules.suggestions.schemas import AcceptResult, AcceptSuggestion, SuggestionOut
@@ -166,6 +168,7 @@ async def suggest_for_message(
     )
     db.add(suggestion)
     await db.commit()
+    await _announce(db, suggestion)
     return suggestion
 
 
@@ -185,7 +188,17 @@ async def suggest_for_document(
     suggestion = _record(decision, project_id=project.id, document_id=document.id)
     db.add(suggestion)
     await db.commit()
+    await _announce(db, suggestion)
     return suggestion
+
+
+async def _announce(db: AsyncSession, suggestion: Suggestion) -> None:
+    # The suggestion is saved either way; people can still find it in the app.
+    try:
+        await triggers.suggestion_created(db, suggestion)
+    except Exception:
+        log.exception("could not notify about suggestion %s", suggestion.id)
+        await db.rollback()
 
 
 async def list_pending(db: AsyncSession, project_id: uuid.UUID) -> list[SuggestionOut]:
@@ -315,4 +328,5 @@ async def dismiss(db: AsyncSession, project: Project, user: User, suggestion_id:
     suggestion.status = SuggestionStatus.dismissed
     suggestion.decided_by = user.id
     suggestion.decided_at = datetime.now(UTC)
+    await resolve_for_suggestion(db, suggestion.id)
     await db.commit()
