@@ -1,5 +1,4 @@
 import logging
-import os
 import uuid
 from datetime import UTC, datetime
 from typing import Protocol
@@ -10,8 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.ai import rules
+from app.ai.client import claude_enabled
 from app.ai.types import Attachment, Decision, Item, RequirementInfo
-from app.core.config import settings
 from app.core.enums import DocumentStatus, MessageKind, RequirementStatus, SuggestionStatus
 from app.core.errors import AppError, not_found
 from app.core.storage import Storage
@@ -78,9 +77,7 @@ class ResilientClaude:
 
 
 def get_classifier() -> Classifier:
-    use_claude = settings.ai_provider == "claude" or (
-        settings.ai_provider == "auto" and bool(os.environ.get("ANTHROPIC_API_KEY"))
-    )
+    use_claude = claude_enabled()
     return ResilientClaude() if use_claude else RulesClassifier()
 
 

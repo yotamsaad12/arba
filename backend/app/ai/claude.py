@@ -12,6 +12,7 @@ import anthropic
 from pydantic import BaseModel
 
 from app.ai import rules
+from app.ai.client import get_client
 from app.ai.types import Decision, Item, RequirementInfo, SuggestableStatus
 from app.core.config import settings
 from app.core.enums import MessageKind
@@ -70,7 +71,7 @@ class _Answer(BaseModel):
 
 class ClaudeClassifier:
     def __init__(self, client: anthropic.AsyncAnthropic | None = None):
-        self.client = client or anthropic.AsyncAnthropic()
+        self.client = client or get_client()
 
     async def classify(self, item: Item, requirements: list[RequirementInfo]) -> Decision:
         refs = {f"R{i + 1}": r for i, r in enumerate(sorted(requirements, key=lambda r: r.order))}

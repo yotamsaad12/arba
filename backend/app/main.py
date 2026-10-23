@@ -67,10 +67,13 @@ def create_app() -> FastAPI:
     if settings.serverless:
         from fastapi import Request
 
+        from app.ai.client import store_identity_token
         from app.core.bootstrap import ensure_ready
 
         @app.middleware("http")
         async def _bootstrap(request: Request, call_next):  # type: ignore[no-untyped-def]
+            # Vercel's identity token for this request: what Claude federation exchanges.
+            store_identity_token(request.headers.get("x-vercel-oidc-token", ""))
             # First request on a fresh instance: migrate and load reference data once.
             if request.url.path.startswith("/api/"):
                 await ensure_ready()

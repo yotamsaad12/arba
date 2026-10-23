@@ -2,13 +2,13 @@
 
 import json
 import logging
-import os
 from dataclasses import dataclass, field
 from datetime import date
 
 import anthropic
 from pydantic import BaseModel
 
+from app.ai.client import claude_enabled, get_client
 from app.core.config import settings
 from app.core.enums import DraftKind
 
@@ -78,14 +78,8 @@ class _Answer(BaseModel):
     missing_documents_he: list[str]
 
 
-def _use_claude() -> bool:
-    return settings.ai_provider == "claude" or (
-        settings.ai_provider == "auto" and bool(os.environ.get("ANTHROPIC_API_KEY"))
-    )
-
-
 async def write(facts: Facts) -> Letter:
-    if _use_claude():
+    if claude_enabled():
         try:
             letter = await _with_claude(facts)
             if letter is not None:
@@ -96,7 +90,7 @@ async def write(facts: Facts) -> Letter:
 
 
 async def _with_claude(facts: Facts) -> Letter | None:
-    client = anthropic.AsyncAnthropic()
+    client = get_client()
     payload = {
         "kind": facts.kind.value,
         "owner_name": facts.owner_name,

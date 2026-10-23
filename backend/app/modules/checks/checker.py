@@ -7,7 +7,6 @@ right kind, is it signed and stamped, is it about this property, is it still val
 import base64
 import json
 import logging
-import os
 import re
 from dataclasses import dataclass
 from datetime import date
@@ -16,6 +15,7 @@ from typing import Any, Literal
 import anthropic
 from pydantic import BaseModel
 
+from app.ai.client import claude_enabled, get_client
 from app.core.config import settings
 from app.core.enums import CheckVerdict
 
@@ -99,12 +99,6 @@ class _Answer(BaseModel):
     summary_he: str
 
 
-def _use_claude() -> bool:
-    return settings.ai_provider == "claude" or (
-        settings.ai_provider == "auto" and bool(os.environ.get("ANTHROPIC_API_KEY"))
-    )
-
-
 def _iso(value: str | None) -> date | None:
     try:
         return date.fromisoformat(value) if value else None
@@ -149,7 +143,7 @@ async def _with_claude(
     }
     content = [block, {"type": "text", "text": json.dumps(payload, ensure_ascii=False)}]
     messages: list[Any] = [{"role": "user", "content": content}]
-    client = anthropic.AsyncAnthropic()
+    client = get_client()
     response = await client.beta.messages.parse(
         model=settings.ai_model,
         max_tokens=2048,
@@ -249,7 +243,7 @@ def with_rules(file_name: str, content_type: str, data: bytes, facts: Facts) -> 
 
 
 async def check(file_name: str, content_type: str, data: bytes, facts: Facts) -> CheckResult:
-    if _use_claude():
+    if claude_enabled():
         try:
             result = await _with_claude(file_name, content_type, data, facts)
             if result is not None:

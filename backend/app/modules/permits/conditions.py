@@ -9,12 +9,12 @@ person approves.
 import base64
 import json
 import logging
-import os
 import re
 
 import anthropic
 from pydantic import BaseModel
 
+from app.ai.client import claude_enabled, get_client
 from app.core.config import settings
 from app.core.enums import AuthorityType, ConditionTiming
 
@@ -73,7 +73,7 @@ class _Answer(BaseModel):
 async def _with_claude(
     pdf: bytes, stages: list[dict[str, str]], requirements: list[dict[str, str]]
 ) -> list[FoundCondition] | None:
-    client = anthropic.AsyncAnthropic()
+    client = get_client()
     authorities = ", ".join(a.value for a in AuthorityType)
     response = await client.beta.messages.parse(
         model=settings.ai_model,
@@ -196,9 +196,7 @@ def _title(text: str) -> str:
 async def read(
     pdf: bytes, stages: list[dict[str, str]], requirements: list[dict[str, str]]
 ) -> tuple[list[FoundCondition], str]:
-    use_claude = settings.ai_provider == "claude" or (
-        settings.ai_provider == "auto" and bool(os.environ.get("ANTHROPIC_API_KEY"))
-    )
+    use_claude = claude_enabled()
     if use_claude:
         try:
             found = await _with_claude(pdf, stages, requirements)

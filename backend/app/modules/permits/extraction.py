@@ -3,7 +3,6 @@
 import base64
 import io
 import logging
-import os
 import re
 from datetime import date
 
@@ -11,6 +10,7 @@ import anthropic
 from pydantic import BaseModel
 from pypdf import PdfReader
 
+from app.ai.client import claude_enabled, get_client
 from app.core.config import settings
 from app.modules.permits.schemas import PermitFields
 
@@ -53,7 +53,7 @@ def _date(value: str | None) -> date | None:
 
 
 async def _with_claude(pdf: bytes) -> PermitFields | None:
-    client = anthropic.AsyncAnthropic()
+    client = get_client()
     response = await client.beta.messages.parse(
         model=settings.ai_model,
         max_tokens=2048,
@@ -156,9 +156,7 @@ def fields_from_text(text: str) -> PermitFields:
 
 
 async def extract(pdf: bytes) -> tuple[PermitFields, str]:
-    use_claude = settings.ai_provider == "claude" or (
-        settings.ai_provider == "auto" and bool(os.environ.get("ANTHROPIC_API_KEY"))
-    )
+    use_claude = claude_enabled()
     if use_claude:
         try:
             fields = await _with_claude(pdf)
