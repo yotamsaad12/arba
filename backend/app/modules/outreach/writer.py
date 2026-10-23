@@ -150,7 +150,9 @@ async def _with_claude(facts: Facts) -> Letter | None:
 
 
 def with_template(facts: Facts) -> Letter:
-    place = ", ".join(p for p in (facts.address, facts.locality) if p)
+    # The address often already ends with the locality ("אחוזה 120, רעננה").
+    in_address = facts.address and facts.locality and facts.locality in facts.address
+    place = ", ".join(p for p in (facts.address, None if in_address else facts.locality) if p)
     ids = []
     if facts.gush:
         ids.append(f"גוש {facts.gush}" + (f" חלקה {facts.helka}" if facts.helka else ""))
