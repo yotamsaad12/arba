@@ -125,14 +125,14 @@ async def test_the_authority_list_is_added_in_its_area(client: AsyncClient) -> N
     token = await register(client)
     project = await new_project(client, token, locality_code=YEROHAM)
     reqs = await requirements(client, token, project["id"])
-    developer = by_title(reqs, "התייחסות החברה המפתחת")
+    developer = by_title(reqs, "התייחסות החברה המפתחת לפי השכונה")
     assert developer["stage"] == "form4" and developer["origin"] == "city_list"
-    plans = by_title(reqs, "הצהרת מתכנן השלד (טופס ה-2)")
+    plans = by_title(reqs, "דוח פיקוח עליון - מתכנן השלד (טופס ה-2)")
     assert "תוכניות קונסטרוקציה בקובצי PDF" in plans["required_documents"]
 
     elsewhere = await new_project(client, token, locality_code=RAANANA)
     titles = {r["title"] for r in await requirements(client, token, elsewhere["id"])}
-    assert "התייחסות החברה המפתחת" not in titles
+    assert "התייחסות החברה המפתחת לפי השכונה" not in titles
 
 
 async def test_what_an_authority_asks_for_joins_the_step(client: AsyncClient) -> None:

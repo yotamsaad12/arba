@@ -34,6 +34,12 @@ export type Draft = Schemas["DraftOut"];
 export type Contact = Schemas["TeamMemberOut"];
 export type DocumentRequestInfo = Schemas["RequestOut"];
 export type PublicRequest = Schemas["PublicRequestOut"];
+export type Form4File = Schemas["Form4File"];
+export type TrackSummary = Schemas["TrackSummary"];
+export type ChecklistImport = Schemas["ImportOut"];
+export type ImportedItem = Schemas["ImportedItemOut"];
+export type Form4Track = Schemas["Form4Track"];
+export type ProjectFeature = Schemas["ProjectFeature"];
 
 export interface ApiOptions {
   /** Empty for the web app, which reaches the API through the dev proxy / same origin. */

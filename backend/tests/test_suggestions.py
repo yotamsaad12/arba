@@ -8,7 +8,8 @@ from tests.test_inbox import deliver, email, inbox, setup_project
 from tests.test_projects import by_title, requirements
 
 WATER_APPROVAL = "אישור חיבור למים וביוב מתאגיד המים"
-MAMAD_REBAR = 'בדיקת ברזל ותבניות של הממ"ד לפני יציקה'
+# A request from the Home Front Command lands on its approval item in the Form 4 file.
+MAMAD_REBAR = 'אישור פיקוד העורף לממ"ד'
 
 
 def hfc_request(to: str, **extra: Any) -> dict[str, Any]:
@@ -19,6 +20,8 @@ def hfc_request(to: str, **extra: Any) -> dict[str, Any]:
         sender="mamad@oref.org.il",
         subject='בקשה להשלמת מסמכים - ממ"ד',
         TextBody="לצורך מתן האישור נדרש להשלים: צילום ברזל לפני יציקה.",
+        FromFull={"Email": "mamad@oref.org.il", "Name": "פיקוד העורף"},
+        attachments=[],
         **extra,
     )
 
@@ -53,14 +56,14 @@ async def test_incoming_approval_gets_a_filing_suggestion(client: AsyncClient) -
     assert suggestion["source"] == "rules"
 
 
-async def test_accepting_files_the_thread_and_reports_a_blocked_status(client: AsyncClient) -> None:
+async def test_accepting_files_the_thread_and_applies_the_status(client: AsyncClient) -> None:
     token, project = await setup_project(client)
     await deliver(client, email(project["inbox_address"]))
     [suggestion] = await pending(client, token, project["id"])
 
     result = await accept(client, token, project["id"], suggestion["id"])
-    # Filed, but "done" needs the plumbing requirements first, so the status is left alone.
-    assert (result["status_applied"], result["status_error"]) == (False, "dependencies_not_done")
+    # The approval is recorded even though earlier steps are still open.
+    assert (result["status_applied"], result["status_error"]) == (True, None)
     thread = (await inbox(client, token, project["id"]))[0]
     assert thread["requirement_title"] == WATER_APPROVAL
     assert await pending(client, token, project["id"]) == []
@@ -83,7 +86,7 @@ async def test_person_can_choose_a_different_requirement(client: AsyncClient) ->
     token, project = await setup_project(client)
     await deliver(client, email(project["inbox_address"]))
     [suggestion] = await pending(client, token, project["id"])
-    sewage = by_title(await requirements(client, token, project["id"]), "ביוב וניקוז")
+    sewage = by_title(await requirements(client, token, project["id"]), "ריכוז בדיקות ביוב חוץ")
 
     result = await accept(
         client,
@@ -94,7 +97,7 @@ async def test_person_can_choose_a_different_requirement(client: AsyncClient) ->
         apply_status=False,
     )
     assert (result["requirement_id"], result["status_applied"]) == (sewage["id"], False)
-    sewage = by_title(await requirements(client, token, project["id"]), "ביוב וניקוז")
+    sewage = by_title(await requirements(client, token, project["id"]), "ריכוז בדיקות ביוב חוץ")
     assert sewage["document_count"] == 1
 
 

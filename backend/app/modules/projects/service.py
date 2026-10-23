@@ -73,6 +73,10 @@ async def create_project(db: AsyncSession, user: User, data: ProjectCreate) -> P
         helka=data.helka,
         permit_number=data.permit_number,
         permit_valid_until=data.permit_valid_until,
+        plot_number=data.plot_number,
+        buildings=data.buildings,
+        units=data.units,
+        features=[f.value for f in data.features],
         inbox_address=f"{slug}@{settings.inbox_domain}",
     )
     db.add(project)
@@ -105,53 +109,77 @@ async def create_project(db: AsyncSession, user: User, data: ProjectCreate) -> P
     return project
 
 
+def _copies(tr: TemplateRequirement, project: Project) -> list[int | None]:
+    """Which copies of a template item the project gets: one per floor, per building, or one."""
+    if tr.repeat == Repeat.per_floor:
+        return list(range(1, project.floors + 1))
+    if tr.repeat == Repeat.per_building:
+        return list(range(1, max(project.buildings, 1) + 1))
+    return [None]
+
+
 def expand_template(
     template: Template, project: Project
 ) -> tuple[list[Requirement], dict[uuid.UUID, list[uuid.UUID]]]:
-    """Copies template requirements into the project, one per floor where they repeat."""
-    instances: dict[uuid.UUID, dict[int | None, Requirement]] = {}
-    for tr in template.requirements:
-        floors: list[int | None] = (
-            list(range(1, project.floors + 1)) if tr.repeat == Repeat.per_floor else [None]
-        )
-        instances[tr.id] = {f: _instantiate(tr, project, f) for f in floors}
+    """Copies template requirements into the project: per floor or per building where they
+    repeat. Items for features the project doesn't have start as not applicable."""
+    by_id = {tr.id: tr for tr in template.requirements}
+    instances: dict[uuid.UUID, dict[int | None, Requirement]] = {
+        tr.id: {n: _instantiate(tr, project, n) for n in _copies(tr, project)}
+        for tr in template.requirements
+    }
 
     deps: dict[uuid.UUID, list[uuid.UUID]] = {
-        r.id: [] for per_floor in instances.values() for r in per_floor.values()
+        r.id: [] for copies in instances.values() for r in copies.values()
     }
     for td in template.dependencies:
         children, parents = instances[td.requirement_id], instances[td.depends_on_id]
-        for floor, child in children.items():
+        same_kind = by_id[td.requirement_id].repeat == by_id[td.depends_on_id].repeat
+        for n, child in children.items():
             if td.kind == DependencyKind.previous_floor:
-                targets = [parents[floor - 1]] if floor and floor - 1 in parents else []
-            elif floor is not None and floor in parents:
-                targets = [parents[floor]]
+                targets = [parents[n - 1]] if n and n - 1 in parents else []
+            elif n is not None and same_kind and n in parents:
+                targets = [parents[n]]
             else:
                 targets = list(parents.values())
             deps[child.id].extend(p.id for p in targets)
 
-    requirements = [r for per_floor in instances.values() for r in per_floor.values()]
+    requirements = [r for copies in instances.values() for r in copies.values()]
     return requirements, deps
 
 
-def _instantiate(tr: TemplateRequirement, project: Project, floor: int | None) -> Requirement:
+def _instantiate(tr: TemplateRequirement, project: Project, n: int | None) -> Requirement:
+    floor = n if tr.repeat == Repeat.per_floor else None
+    building = n if tr.repeat == Repeat.per_building else None
+    title = tr.title
+    if floor:
+        title = f"{tr.title} – קומה {floor}"
+    elif building and project.buildings > 1:
+        title = f"{tr.title} – בניין {building}"
+    applies = set(tr.applies_if) <= set(project.features or [])
     return Requirement(
         id=uuid.uuid4(),
         project_id=project.id,
         template_requirement_id=tr.id,
         stage=tr.stage,
-        title=f"{tr.title} – קומה {floor}" if floor else tr.title,
+        title=title,
         description=tr.description,
         authority_type=tr.authority_type,
         channel=tr.channel,
         estimated_days=tr.estimated_days,
         floor=floor,
+        building=building,
         required_documents=list(tr.required_documents),
-        optional=tr.optional,
+        optional=tr.optional or bool(tr.applies_if),
         is_form4_gate=tr.is_form4_gate,
         order=tr.order,
+        track=tr.track,
+        appendix=tr.appendix,
+        standard=tr.standard,
+        applies_if=list(tr.applies_if),
+        fulfilled_by_track=tr.fulfilled_by_track,
         # Column defaults only apply at insert; the engine runs before that.
-        status=RequirementStatus.not_started,
+        status=RequirementStatus.not_started if applies else RequirementStatus.not_applicable,
     )
 
 

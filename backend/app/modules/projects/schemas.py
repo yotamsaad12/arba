@@ -8,7 +8,9 @@ from app.core.enums import (
     AuthorityType,
     Channel,
     ClientType,
+    Form4Track,
     PermitStatus,
+    ProjectFeature,
     ProjectRole,
     ProjectStatus,
     RequirementOrigin,
@@ -33,6 +35,11 @@ class ProjectCreate(BaseModel):
     permit_issue_date: date | None = None
     permit_valid_until: date | None = None
     permit_committee: str | None = Field(default=None, max_length=200)
+    plot_number: str | None = Field(default=None, max_length=32)
+    # Residential projects: items marked per building repeat for each one.
+    buildings: int = Field(default=1, ge=1, le=50)
+    units: int | None = Field(default=None, ge=1, le=5000)
+    features: list[ProjectFeature] = []
 
     @model_validator(mode="after")
     def _needs_a_place(self) -> "ProjectCreate":
@@ -92,6 +99,10 @@ class ProjectOut(BaseModel):
     locality_code: int | None
     municipality_code: int | None
     permit_status: PermitStatus
+    plot_number: str | None
+    buildings: int
+    units: int | None
+    features: list[str]
     role: ProjectRole
     build: BuildState
 
@@ -135,6 +146,15 @@ class RequirementOut(BaseModel):
     origin: RequirementOrigin
     # What Arba's document checks found ("⛔ file: issue"), most serious first.
     check_issues: list[str] = []
+    # The Form 4 file: whose list the item is on, and its references.
+    track: Form4Track = Form4Track.municipality
+    appendix: str | None = None
+    standard: str | None = None
+    notes: str | None = None
+    due_date: date | None = None
+    applies_if: list[str] = []
+    fulfilled_by_track: Form4Track | None = None
+    building: int | None = None
 
 
 class RequirementList(BaseModel):
@@ -162,3 +182,62 @@ class StatusUpdate(BaseModel):
 
 def stages_of(project: Any) -> list[Stage]:
     return [Stage(**s) for s in (project.template.stages if project.template else [])]
+
+
+class ProjectUpdate(BaseModel):
+    """Details that can change during the project. Changing the features re-evaluates which
+    items apply."""
+
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    address: str | None = Field(default=None, max_length=300)
+    plot_number: str | None = Field(default=None, max_length=32)
+    gush: str | None = Field(default=None, max_length=32)
+    helka: str | None = Field(default=None, max_length=32)
+    units: int | None = Field(default=None, ge=1, le=5000)
+    features: list[ProjectFeature] | None = None
+
+
+class RequirementCreate(BaseModel):
+    """A step the team adds to the file: one of their authority's own items."""
+
+    title: str = Field(min_length=1, max_length=300)
+    track: Form4Track = Form4Track.municipality
+    stage: str = "form4"
+    authority_type: AuthorityType = AuthorityType.municipality
+    description: str | None = Field(default=None, max_length=2000)
+    documents: list[str] = []
+    appendix: str | None = Field(default=None, max_length=32)
+    standard: str | None = Field(default=None, max_length=100)
+    due_date: date | None = None
+    notes: str | None = Field(default=None, max_length=2000)
+
+
+class RequirementUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=300)
+    track: Form4Track | None = None
+    authority_type: AuthorityType | None = None
+    description: str | None = Field(default=None, max_length=2000)
+    documents: list[str] | None = None
+    appendix: str | None = Field(default=None, max_length=32)
+    standard: str | None = Field(default=None, max_length=100)
+    due_date: date | None = None
+    notes: str | None = Field(default=None, max_length=2000)
+
+
+class TrackSummary(BaseModel):
+    track: Form4Track
+    total: int
+    done: int
+    # Items with a file attached but not marked done yet.
+    with_files: int
+    # The item on another list this file's completion fulfils, if any.
+    fulfils: list[uuid.UUID]
+    complete: bool
+
+
+class Form4File(BaseModel):
+    """The project's Form 4 file, by authority."""
+
+    tracks: list[TrackSummary]
+    total: int
+    done: int

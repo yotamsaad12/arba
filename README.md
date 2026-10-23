@@ -85,6 +85,32 @@ checks pass; the last step is the person finding the permit on the committee's o
   rejection, what the authority asked for joins the step's documents and is recorded in
   `checklist_feedback` for improving the base template.
 
+### The Form 4 file
+
+Arba's job is that every document Form 4 needs is in the file, and that each one is the right
+document for this property; it does not judge the quality of the work.
+
+- **Two templates.** `private_house.yaml` (v3) for a private house and
+  `residential_building.yaml` for developers' residential buildings, built from real authority
+  lists (Excel per authority, the fire department's letter with standards, the lab list, the
+  Home Front Command form). Items carry a **track** (municipality, fire, Home Front Command,
+  water, electricity, telecom, gas, developer, accessibility), an appendix (נספח), a standard
+  (ת"י) and notes. Developer projects repeat per-building items for each building.
+- **Features.** A project says what it has (basement, pool, elevator, gas, sprinklers…);
+  items that need a feature it lacks start as not needed and switch on when the feature is
+  added (`PATCH /projects/{id}`).
+- **The file view** (`GET /projects/{id}/form4`, tab "תיק טופס 4"): progress per track, five
+  plain states (missing, in progress, needs fixing, received, not needed), inline notes,
+  appendix, standard and due date, files, requests to professionals. Approvals that an
+  authority gives once its whole list is in (`fulfilled_by`) are ticked automatically.
+- **The team's own items.** Add, edit and remove items (`/projects/{id}/requirements`); items
+  from the template can be marked not needed but not removed.
+- **An authority's list.** Upload an Excel, PDF, photo or text list, or pick one that came by
+  email from the documents tab (`/projects/{id}/checklist/imports`). Excel is read by rules
+  (sheet per authority, status column for appendix/"not needed"/notes); PDFs and images by
+  Claude. Each item is matched to the file (synonyms, spelling variants) and proposed as merge,
+  add or skip; the person approves. The list is kept under the "Form 4 list" step.
+
 ### Writing to the authorities
 
 Arba drafts requests to the approving bodies (committee, water corporation, fire and rescue,

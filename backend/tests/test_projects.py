@@ -4,8 +4,11 @@ from httpx import AsyncClient
 
 from tests.conftest import auth, register
 
-TEMPLATE_REQUIREMENTS = 45
-PER_FLOOR_REQUIREMENTS = 5  # formwork, sleeves, rebar, photos, pour
+TEMPLATE_REQUIREMENTS = 49  # private house v3: the Form 4 file by authority
+PER_FLOOR_REQUIREMENTS = 1  # concrete certificates for each floor
+# Items for features a new project doesn't have yet (pool, gas, cladding, acoustic ceiling,
+# developer neighbourhood) start as not needed.
+FEATURE_ITEMS = 5
 
 
 async def create_project(client: AsyncClient, token: str, floors: int = 2) -> dict[str, Any]:
@@ -47,9 +50,10 @@ async def set_status(
 async def test_template_lists_with_counts(client: AsyncClient) -> None:
     token = await register(client)
     templates = (await client.get("/api/v1/templates", headers=auth(token))).json()
-    assert [(t["key"], t["requirement_count"]) for t in templates] == [
-        ("private_house", TEMPLATE_REQUIREMENTS)
-    ]
+    assert {(t["key"], t["requirement_count"]) for t in templates} == {
+        ("private_house", TEMPLATE_REQUIREMENTS),
+        ("residential_building", 75),
+    }
 
 
 async def test_project_gets_random_inbox_and_owner_role(client: AsyncClient) -> None:
@@ -66,9 +70,9 @@ async def test_skeleton_repeats_per_floor_and_chains_floors(client: AsyncClient)
     reqs = await requirements(client, token, project["id"])
     assert len(reqs) == TEMPLATE_REQUIREMENTS + PER_FLOOR_REQUIREMENTS
 
-    formwork_2 = next(r for r in reqs if r["title"].startswith("תבניות") and r["floor"] == 2)
-    pour_1 = next(r for r in reqs if r["title"].startswith("יציקה ודגימות") and r["floor"] == 1)
-    assert pour_1["id"] in formwork_2["depends_on"]
+    floor_2 = next(r for r in reqs if r["title"].startswith("תעודות בטון –") and r["floor"] == 2)
+    floor_1 = next(r for r in reqs if r["title"].startswith("תעודות בטון –") and r["floor"] == 1)
+    assert floor_1["id"] in floor_2["depends_on"]
 
 
 async def test_next_steps_on_a_new_project(client: AsyncClient) -> None:
@@ -80,9 +84,12 @@ async def test_next_steps_on_a_new_project(client: AsyncClient) -> None:
 
     ready = {r["title"] for r in steps["ready"]}
     assert "היתר בנייה בתוקף ורשימת התנאים שבו" in ready
-    assert "חוזה עם הקבלן" in ready
+    assert 'טופס הזמנת הג"א לביקורת' in ready
     assert all(r["blocked_by"] for r in steps["blocked"])
-    assert steps["progress"] == {"done": 0, "total": TEMPLATE_REQUIREMENTS + PER_FLOOR_REQUIREMENTS}
+    assert steps["progress"] == {
+        "done": FEATURE_ITEMS,
+        "total": TEMPLATE_REQUIREMENTS + PER_FLOOR_REQUIREMENTS,
+    }
 
     reqs = {r["id"]: r for r in await requirements(client, token, project["id"])}
     path = steps["critical_path"]["requirement_ids"]
@@ -90,20 +97,22 @@ async def test_next_steps_on_a_new_project(client: AsyncClient) -> None:
     assert steps["critical_path"]["remaining_days"] > 0
 
 
-async def test_cannot_start_before_dependencies_are_done(client: AsyncClient) -> None:
+async def test_an_item_can_be_ticked_before_the_steps_before_it(client: AsyncClient) -> None:
+    # A document that arrives early is recorded when it arrives; the open step before it
+    # still shows.
     token = await register(client)
     project = await create_project(client, token)
     reqs = await requirements(client, token, project["id"])
     permit, plans = by_title(reqs, "היתר בנייה"), by_title(reqs, "תיק תוכניות")
     assert plans["status"] == "blocked"
 
-    response = await set_status(client, token, project["id"], plans["id"], "in_progress")
-    assert response.status_code == 409
-    assert response.json()["error"]["details"]["blocked_by"] == [permit["id"]]
+    response = await set_status(client, token, project["id"], plans["id"], "done")
+    assert response.status_code == 200
+    assert response.json()["blocked_by"] == [permit["id"]]
 
     assert (await set_status(client, token, project["id"], permit["id"], "done")).status_code == 200
     plans = by_title(await requirements(client, token, project["id"]), "תיק תוכניות")
-    assert plans["status"] == "ready"
+    assert (plans["status"], plans["blocked_by"]) == ("done", [])
 
 
 async def test_reopening_a_dependency_flags_started_work(client: AsyncClient) -> None:
@@ -121,19 +130,16 @@ async def test_reopening_a_dependency_flags_started_work(client: AsyncClient) ->
     assert plans["blocked_by"] == [permit["id"]]
 
 
-async def test_only_optional_requirements_can_be_not_applicable(client: AsyncClient) -> None:
+async def test_any_item_can_be_not_needed(client: AsyncClient) -> None:
+    # Authorities' own lists mark items "אין צורך"; the team decides.
     token = await register(client)
     project = await create_project(client, token)
     reqs = await requirements(client, token, project["id"])
-
-    permit = by_title(reqs, "היתר בנייה")
-    response = await set_status(client, token, project["id"], permit["id"], "not_applicable")
-    assert response.status_code == 422
-
-    fire = by_title(reqs, "אישור כבאות")
-    response = await set_status(client, token, project["id"], fire["id"], "not_applicable")
-    assert response.status_code == 200
-    assert response.json()["status"] == "not_applicable"
+    for title in ("היתר בנייה", "אישור ממונה בטיחות"):
+        item = by_title(reqs, title)
+        response = await set_status(client, token, project["id"], item["id"], "not_applicable")
+        assert response.status_code == 200
+        assert response.json()["status"] == "not_applicable"
 
 
 async def test_automatic_statuses_cannot_be_set_by_hand(client: AsyncClient) -> None:
@@ -162,9 +168,9 @@ async def test_build_state_tracks_stages_floors_and_focus(client: AsyncClient) -
     skeleton = sorted((s["floor"], s["total"]) for s in build["stages"] if s["stage"] == "skeleton")
     assert skeleton == [(1, PER_FLOOR_REQUIREMENTS), (2, PER_FLOOR_REQUIREMENTS)]
 
-    fire = by_title(await requirements(client, token, project["id"]), "אישור כבאות")
+    fire = by_title(await requirements(client, token, project["id"]), "אישור ממונה בטיחות")
     await set_status(client, token, project["id"], fire["id"], "not_applicable")
     detail = (await client.get(f"/api/v1/projects/{project['id']}", headers=auth(token))).json()
     form4 = next(s for s in detail["build"]["stages"] if s["stage"] == "form4")
     assert (form4["done"], form4["skipped"]) == (1, 1)
-    assert detail["build"]["progress"]["done"] == 1
+    assert detail["build"]["progress"]["done"] == FEATURE_ITEMS + 1

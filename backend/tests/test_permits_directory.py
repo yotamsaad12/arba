@@ -16,7 +16,7 @@ RAANANA_COMMITTEE = "הוועדה המקומית לתכנון ובנייה רע�
 
 async def template_id(client: AsyncClient, token: str) -> str:
     templates = (await client.get("/api/v1/templates", headers=auth(token))).json()
-    return templates[0]["id"]
+    return next(t["id"] for t in templates if t["key"] == "private_house")
 
 
 async def new_project(client: AsyncClient, token: str, **fields: Any) -> dict[str, Any]:

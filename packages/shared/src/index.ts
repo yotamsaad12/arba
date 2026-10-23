@@ -32,13 +32,12 @@ export type ManualStatus = Exclude<RequirementStatus, "blocked" | "ready">;
 
 /** The status changes a person can make from each status, in button order. */
 export function statusActions(status: RequirementStatus, optional: boolean): ManualStatus[] {
-  const skip: ManualStatus[] = optional ? ["not_applicable"] : [];
+  // Any item can be "not needed" (authorities' own lists say "אין צורך"); optional ones lead with it.
   switch (status) {
     case "not_started":
     case "ready":
-      return ["in_progress", "done", ...skip];
     case "blocked":
-      return skip;
+      return optional ? ["not_applicable", "in_progress", "done"] : ["in_progress", "done", "not_applicable"];
     case "in_progress":
       return ["waiting_for_authority", "done", "needs_fix"];
     case "waiting_for_authority":

@@ -117,7 +117,15 @@ async def test_catch_up_then_report_what_is_missing(client: AsyncClient) -> None
     assert accepted["accepted"] + accepted["left"] == 6
 
     after = await report(client, token, project["id"])
-    assert after["pending_suggestions"] == accepted["left"]
+    # Arba checked the filed documents and proposes marking complete steps done.
+    done_proposals = [
+        s
+        for s in (
+            await client.get(f"/api/v1/projects/{project['id']}/suggestions", headers=auth(token))
+        ).json()
+        if s["target"] == "document" and s["suggested_status"] == "done"
+    ]
+    assert after["pending_suggestions"] == accepted["left"] + len(done_proposals)
     found = {i["requirement_id"] for i in after["found"] if i["documents"]}
     # What the mailbox held now covers steps that were missing documents before.
     assert found & missing_before

@@ -13,17 +13,22 @@ from app.modules.projects import service
 from app.modules.projects.schemas import (
     BuildState,
     CriticalPath,
+    Form4File,
     NextSteps,
     Progress,
     ProjectCreate,
     ProjectDetail,
     ProjectOut,
+    ProjectUpdate,
+    RequirementCreate,
     RequirementList,
     RequirementOut,
+    RequirementUpdate,
     StageProgress,
     StatusUpdate,
     stages_of,
 )
+from app.modules.requirements import checklist
 from app.modules.requirements import service as requirements_service
 from app.modules.requirements.engine import DONE, EngineResult
 
@@ -101,6 +106,14 @@ def _requirement_out(
         document_count=documents.get(r.id, 0),
         origin=r.origin,
         check_issues=(issues or {}).get(r.id, []),
+        track=r.track,
+        appendix=r.appendix,
+        standard=r.standard,
+        notes=r.notes,
+        due_date=r.due_date,
+        applies_if=r.applies_if,
+        fulfilled_by_track=r.fulfilled_by_track,
+        building=r.building,
     )
 
 
@@ -184,6 +197,66 @@ async def update_requirement_status(
 ) -> RequirementOut:
     project, _ = await service.get_project_for_user(db, project_id, user, ProjectRole.manager)
     await requirements_service.change_status(db, project, requirement_id, data.status, user)
+    requirements, deps = await requirements_service.load_graph(db, project.id)
+    result = requirements_service.run_engine(requirements, deps)
+    requirement = next(r for r in requirements if r.id == requirement_id)
+    counts = await document_counts(db, project.id)
+    issues = await document_issues(db, project.id)
+    return _requirement_out(requirement, deps, result, set(result.critical_path), counts, issues)
+
+
+@router.patch("/{project_id}")
+async def update_project(
+    project_id: uuid.UUID, data: ProjectUpdate, db: DB, user: CurrentUser
+) -> ProjectDetail:
+    """Edits project details. Changing features re-evaluates which items apply."""
+    project, _ = await service.get_project_for_user(db, project_id, user, ProjectRole.manager)
+    await checklist.update_project(db, project, user, data)
+    return await get_project(project_id, db, user)
+
+
+@router.get("/{project_id}/form4")
+async def get_form4_file(project_id: uuid.UUID, db: DB, user: CurrentUser) -> Form4File:
+    """The Form 4 file by authority: how complete each authority's list is."""
+    project, _ = await service.get_project_for_user(db, project_id, user)
+    return await checklist.form4_file(db, project)
+
+
+@router.post("/{project_id}/requirements", status_code=status.HTTP_201_CREATED)
+async def add_requirement(
+    project_id: uuid.UUID, data: RequirementCreate, db: DB, user: CurrentUser
+) -> RequirementOut:
+    """Adds an item to the file, e.g. one the authority asked for that isn't in the template."""
+    project, _ = await service.get_project_for_user(db, project_id, user, ProjectRole.manager)
+    requirement = await checklist.create_item(db, project, user, data)
+    return await _one(db, project, requirement.id)
+
+
+@router.patch("/{project_id}/requirements/{requirement_id}")
+async def edit_requirement(
+    project_id: uuid.UUID,
+    requirement_id: uuid.UUID,
+    data: RequirementUpdate,
+    db: DB,
+    user: CurrentUser,
+) -> RequirementOut:
+    project, _ = await service.get_project_for_user(db, project_id, user, ProjectRole.manager)
+    await checklist.update_item(db, project, user, requirement_id, data)
+    return await _one(db, project, requirement_id)
+
+
+@router.delete(
+    "/{project_id}/requirements/{requirement_id}", status_code=status.HTTP_204_NO_CONTENT
+)
+async def remove_requirement(
+    project_id: uuid.UUID, requirement_id: uuid.UUID, db: DB, user: CurrentUser
+) -> None:
+    """Removes an item someone added or imported (template items are marked not needed)."""
+    project, _ = await service.get_project_for_user(db, project_id, user, ProjectRole.manager)
+    await checklist.delete_item(db, project, user, requirement_id)
+
+
+async def _one(db: DB, project: Project, requirement_id: uuid.UUID) -> RequirementOut:
     requirements, deps = await requirements_service.load_graph(db, project.id)
     result = requirements_service.run_engine(requirements, deps)
     requirement = next(r for r in requirements if r.id == requirement_id)

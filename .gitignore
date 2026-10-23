@@ -31,3 +31,6 @@ backend/build/
 .agents/
 .claude/
 skills-lock.json
+
+# Real project documents used as reference (personal data): never commit
+example_files_of requiramante/

@@ -50,6 +50,8 @@ class Channel(StrEnum):
 class Repeat(StrEnum):
     none = "none"
     per_floor = "per_floor"
+    # Residential projects with several buildings: one item for each building.
+    per_building = "per_building"
 
 
 class DependencyKind(StrEnum):
@@ -198,6 +200,10 @@ class ScanStatus(StrEnum):
 
 class RequirementOrigin(StrEnum):
     template = "template"
+    # Added by a person on the project.
+    user = "user"
+    # Imported from an authority's own list (PDF, Excel, photo, email).
+    authority_list = "authority_list"
     # A condition written in the project's building permit.
     permit_condition = "permit_condition"
     # The local authority's own Form 4 list.
@@ -241,3 +247,37 @@ class RequestStatus(StrEnum):
     open = "open"
     fulfilled = "fulfilled"
     cancelled = "cancelled"
+
+
+class Form4Track(StrEnum):
+    """Whose Form 4 file an item belongs to. Each authority keeps its own list and gives its
+    own approval; the municipality's file then needs those approvals."""
+
+    municipality = "municipality"  # the local committee / municipality (the main file)
+    fire = "fire"  # כבאות והצלה
+    home_front = "home_front"  # פיקוד העורף (הג"א)
+    water = "water"  # the water corporation
+    electricity = "electricity"  # חברת החשמל
+    telecom = "telecom"  # Bezeq, HOT, yes
+    gas = "gas"  # the gas company
+    developer = "developer"  # the developing company / Ministry of Construction
+    accessibility = "accessibility"  # accessibility consultant and approval
+
+
+class ProjectFeature(StrEnum):
+    """What the building has; items that depend on a feature apply only when it's there."""
+
+    basement = "basement"
+    pool = "pool"
+    elevator = "elevator"
+    gas = "gas"
+    solar_heater = "solar_heater"
+    stone_cladding = "stone_cladding"
+    retaining_walls = "retaining_walls"
+    acoustic_ceiling = "acoustic_ceiling"
+    gypsum_ceiling = "gypsum_ceiling"
+    steel_fences = "steel_fences"
+    sprinklers = "sprinklers"
+    parking = "parking"
+    commercial = "commercial"
+    developer_neighborhood = "developer_neighborhood"

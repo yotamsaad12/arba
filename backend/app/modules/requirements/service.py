@@ -10,8 +10,10 @@ from app.core.errors import AppError
 from app.db.models import AuditLog, Dependency, Project, Requirement, User
 from app.modules.requirements.engine import AUTOMATIC, EngineResult, Node, evaluate
 
-# Starting, waiting on, or finishing a requirement all need its dependencies to be done.
-NEEDS_DEPENDENCIES = frozenset({S.in_progress, S.waiting_for_authority, S.done})
+# The order of steps drives the timeline and the "waiting for" hints, not what a person may
+# record: a document that arrived early is ticked when it arrives (authorities' own lists have
+# no order). An item finished before what it depends on shows those as still open.
+NEEDS_DEPENDENCIES: frozenset[S] = frozenset()
 MANUAL_TARGETS = frozenset(
     {S.not_started, S.in_progress, S.waiting_for_authority, S.needs_fix, S.done, S.not_applicable}
 )
@@ -66,8 +68,7 @@ async def change_status(
 
     if new_status not in MANUAL_TARGETS:
         raise AppError(422, "status_is_automatic", f"{new_status} is set by the system")
-    if new_status == S.not_applicable and not requirement.optional:
-        raise AppError(422, "requirement_not_optional", "only optional requirements can be skipped")
+    # Any item can be "not needed": authorities' own lists say "אין צורך" freely.
 
     result = run_engine(requirements, deps)
     unmet = result.blocked_by[requirement.id]
@@ -98,6 +99,8 @@ async def change_status(
             after={"status": new_status},
         )
     )
+    apply_automatic_statuses(requirements, run_engine(requirements, deps))
+    sync_fulfilled(requirements)
     apply_automatic_statuses(requirements, run_engine(requirements, deps))
     await db.commit()
 
@@ -153,3 +156,21 @@ async def add_requirement(
         deps[g.id].append(requirement.id)
     apply_automatic_statuses(requirements, run_engine(requirements, deps))
     return requirement
+
+
+def sync_fulfilled(requirements: list[Requirement]) -> list[Requirement]:
+    """Items another authority's file fulfils ("אישור הג"א" ← the Home Front Command file):
+    done once every item on that file is done or not needed. Returns the items it completed."""
+    by_track: dict[str, list[Requirement]] = {}
+    for r in requirements:
+        by_track.setdefault(r.track, []).append(r)
+    completed = []
+    now = datetime.now(UTC)
+    for r in requirements:
+        if r.fulfilled_by_track is None or r.status in (S.done, S.not_applicable):
+            continue
+        items = by_track.get(r.fulfilled_by_track, [])
+        if items and all(i.status in (S.done, S.not_applicable) for i in items):
+            r.status, r.status_changed_at, r.completed_at = S.done, now, now
+            completed.append(r)
+    return completed

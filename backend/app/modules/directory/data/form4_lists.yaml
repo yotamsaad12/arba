@@ -33,7 +33,7 @@
       match: gas
       documents: [תצהיר שאין מערכת גז (כשאין)]
     - key: concrete
-      match: concrete_cert
+      match: concrete_summary
       documents: [בדיקות בטון בכל הקומות כולל רצפה, קירות ותקרת הממ"ד]
 
 - municipality: 831  # ירוחם
@@ -42,13 +42,13 @@
   notes: את כל המסמכים מגישים במייל מרוכז אחד, כל קובץ PDF בנפרד. תאגיד המים בודק עד 21 ימי עבודה.
   requirements:
     - key: developer
-      title: התייחסות החברה המפתחת
+      title: התייחסות החברה המפתחת לפי השכונה
       description: בירוחם שתי חברות מפתחות, לפי השכונה. האופק והאגם - החברה הכלכלית; האירוסים, צהלה ונוף מדבר - משרד הבינוי והשיכון.
       stage: form4
       authority: municipality
       documents: [התייחסות החברה המפתחת]
     - key: structure_plans
-      match: structure_declaration
+      match: structure_supervision
       documents: [תוכניות קונסטרוקציה בקובצי PDF]
     - key: stone_cladding
       title: בדיקת חיפוי אבן בגדר הפונה לרחוב

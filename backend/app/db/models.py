@@ -21,6 +21,7 @@ from app.core.enums import (
     DocumentStatus,
     DraftKind,
     DraftStatus,
+    Form4Track,
     InboundStatus,
     MailboxProvider,
     MessageDirection,
@@ -153,6 +154,11 @@ class TemplateRequirement(IdMixin, Base):
     optional: Mapped[bool] = mapped_column(default=False)
     is_form4_gate: Mapped[bool] = mapped_column(default=False)
     order: Mapped[int]
+    track: Mapped[Form4Track] = mapped_column(default=Form4Track.municipality)
+    appendix: Mapped[str | None] = mapped_column(sa.String(32))
+    standard: Mapped[str | None] = mapped_column(sa.String(100))
+    applies_if: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    fulfilled_by_track: Mapped[Form4Track | None]
 
     template: Mapped[Template] = relationship(back_populates="requirements")
 
@@ -216,6 +222,10 @@ class Project(IdMixin, TimestampMixin, Base):
     )
     permit_confirmed_by: Mapped[uuid.UUID | None] = mapped_column(sa.ForeignKey("users.id"))
     permit_confirmed_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+    plot_number: Mapped[str | None] = mapped_column(sa.String(32))  # מגרש
+    buildings: Mapped[int] = mapped_column(default=1)
+    units: Mapped[int | None]  # apartments, for residential buildings
+    features: Mapped[list[str]] = mapped_column(JSONB, default=list)
     # Reading the permit's conditions: null (not yet), reading, ready, failed.
     conditions_status: Mapped[str | None] = mapped_column(sa.String(16))
 
@@ -354,6 +364,18 @@ class Requirement(IdMixin, TimestampMixin, Base):
     status_changed_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
     due_date: Mapped[date | None]
     completed_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+    # The Form 4 file view: whose list it's on, its form/appendix number and standard.
+    track: Mapped[Form4Track] = mapped_column(default=Form4Track.municipality)
+    appendix: Mapped[str | None] = mapped_column(sa.String(32))
+    standard: Mapped[str | None] = mapped_column(sa.String(100))
+    # Free text the team keeps on the item ("נשלח למורין", "בגמר עבודות הפיתוח").
+    notes: Mapped[str | None] = mapped_column(sa.Text)
+    # Project features the item depends on (see ProjectFeature); empty means always.
+    applies_if: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    # Done when another authority's whole file is done (e.g. "אישור הג"א" in the
+    # municipality file is the outcome of the Home Front Command file).
+    fulfilled_by_track: Mapped[Form4Track | None]
+    building: Mapped[int | None]
     origin: Mapped[RequirementOrigin] = mapped_column(default=RequirementOrigin.template)
     # What it came from: the permit condition's id, or the city list entry ("<code>:<key>").
     origin_ref: Mapped[str | None] = mapped_column(sa.String(100))
@@ -816,3 +838,56 @@ class DocumentRequest(IdMixin, TimestampMixin, Base):
     sent_count: Mapped[int] = mapped_column(default=0)
     last_sent_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
     fulfilled_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+
+
+# --- Authority checklists imported into the Form 4 file -------------------------------
+
+
+class ChecklistImport(IdMixin, TimestampMixin, Base):
+    """An authority's own Form 4 list (Excel, PDF, photo, email attachment) read into
+    proposals; the person approves which become items or update existing ones."""
+
+    __tablename__ = "checklist_imports"
+
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="SET NULL")
+    )
+    document_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("documents.id", ondelete="SET NULL")
+    )
+    file_name: Mapped[str] = mapped_column(sa.String(255))
+    # The authority the list came from, when it's one list (a whole Excel can hold several).
+    track: Mapped[Form4Track | None]
+    source: Mapped[str] = mapped_column(sa.String(16))
+    applied_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+
+
+class ImportedItem(IdMixin, Base):
+    __tablename__ = "imported_items"
+
+    import_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("checklist_imports.id", ondelete="CASCADE"), index=True
+    )
+    position: Mapped[int]
+    number: Mapped[str | None] = mapped_column(sa.String(16))
+    title: Mapped[str] = mapped_column(sa.String(300))
+    track: Mapped[Form4Track]
+    authority_type: Mapped[AuthorityType] = mapped_column(default=AuthorityType.municipality)
+    standard: Mapped[str | None] = mapped_column(sa.String(100))
+    appendix: Mapped[str | None] = mapped_column(sa.String(32))
+    notes: Mapped[str | None] = mapped_column(sa.Text)
+    due_date: Mapped[date | None]
+    # The list itself says it isn't needed ("אין צורך").
+    not_needed: Mapped[bool] = mapped_column(default=False)
+    # Arba's proposal: the existing item this is (null: a new item).
+    match_requirement_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("requirements.id", ondelete="SET NULL")
+    )
+    # proposed, added, merged, skipped
+    status: Mapped[str] = mapped_column(sa.String(16), default="proposed")
+    requirement_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("requirements.id", ondelete="SET NULL")
+    )

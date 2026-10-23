@@ -388,6 +388,63 @@
             }
           }
         }
+      },
+      "patch": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Update Project",
+        "description": "Edits project details. Changing features re-evaluates which items apply.",
+        "operationId": "projects_update_project",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/projects/{project_id}/requirements": {
@@ -421,6 +478,63 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RequirementList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Add Requirement",
+        "description": "Adds an item to the file, e.g. one the authority asked for that isn't in the template.",
+        "operationId": "projects_add_requirement",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequirementCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequirementOut"
                 }
               }
             }
@@ -541,6 +655,173 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/form4": {
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Get Form4 File",
+        "description": "The Form 4 file by authority: how complete each authority's list is.",
+        "operationId": "projects_get_form4_file",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Form4File"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/requirements/{requirement_id}": {
+      "patch": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Edit Requirement",
+        "operationId": "projects_edit_requirement",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "requirement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Requirement Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequirementUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequirementOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Remove Requirement",
+        "description": "Removes an item someone added or imported (template items are marked not needed).",
+        "operationId": "projects_remove_requirement",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "requirement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Requirement Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",
@@ -2251,6 +2532,301 @@
         }
       }
     },
+    "/api/v1/projects/{project_id}/checklist/imports": {
+      "post": {
+        "tags": [
+          "checklist"
+        ],
+        "summary": "Import List",
+        "description": "Reads an authority's Form 4 list and proposes, item by item, where it goes. The file\nis kept in the project under the Form 4 list step.",
+        "operationId": "checklist_import_list",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_checklist_import_list"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "checklist"
+        ],
+        "summary": "List Imports",
+        "operationId": "checklist_list_imports",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportOut"
+                  },
+                  "title": "Response Checklist List Imports"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/checklist/imports/from-document": {
+      "post": {
+        "tags": [
+          "checklist"
+        ],
+        "summary": "Import From Document",
+        "description": "Reads a list that is already in the project, e.g. an attachment of the authority's email.",
+        "operationId": "checklist_import_from_document",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportFromDocument"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/checklist/imports/{import_id}": {
+      "get": {
+        "tags": [
+          "checklist"
+        ],
+        "summary": "Get Import",
+        "operationId": "checklist_get_import",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "import_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Import Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/checklist/imports/{import_id}/apply": {
+      "post": {
+        "tags": [
+          "checklist"
+        ],
+        "summary": "Apply Import",
+        "description": "Applies the person's decisions (or Arba's proposals as they are).",
+        "operationId": "checklist_apply_import",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "import_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Import Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyImport"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/projects/{project_id}/drafts": {
       "get": {
         "tags": [
@@ -3811,6 +4387,26 @@
         "type": "object",
         "title": "AcceptSuggestion"
       },
+      "ApplyImport": {
+        "properties": {
+          "decisions": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ImportDecision"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decisions"
+          }
+        },
+        "type": "object",
+        "title": "ApplyImport"
+      },
       "AttachmentOut": {
         "properties": {
           "id": {
@@ -3911,6 +4507,20 @@
           "architect"
         ],
         "title": "AuthorityType"
+      },
+      "Body_checklist_import_list": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_checklist_import_list"
       },
       "Body_permits_extract_permit": {
         "properties": {
@@ -4887,6 +5497,49 @@
         ],
         "title": "FileThread"
       },
+      "Form4File": {
+        "properties": {
+          "tracks": {
+            "items": {
+              "$ref": "#/components/schemas/TrackSummary"
+            },
+            "type": "array",
+            "title": "Tracks"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "done": {
+            "type": "integer",
+            "title": "Done"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tracks",
+          "total",
+          "done"
+        ],
+        "title": "Form4File",
+        "description": "The project's Form 4 file, by authority."
+      },
+      "Form4Track": {
+        "type": "string",
+        "enum": [
+          "municipality",
+          "fire",
+          "home_front",
+          "water",
+          "electricity",
+          "telecom",
+          "gas",
+          "developer",
+          "accessibility"
+        ],
+        "title": "Form4Track",
+        "description": "Whose Form 4 file an item belongs to. Each authority keeps its own list and gives its\nown approval; the municipality's file then needs those approvals."
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -4899,6 +5552,248 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "ImportDecision": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Item Id"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "merge",
+              "add",
+              "skip"
+            ],
+            "title": "Action"
+          },
+          "requirement_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requirement Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_id",
+          "action"
+        ],
+        "title": "ImportDecision"
+      },
+      "ImportFromDocument": {
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Document Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document_id"
+        ],
+        "title": "ImportFromDocument"
+      },
+      "ImportOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "file_name": {
+            "type": "string",
+            "title": "File Name"
+          },
+          "track": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Form4Track"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "applied_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applied At"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ImportedItemOut"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "file_name",
+          "track",
+          "source",
+          "applied_at",
+          "items"
+        ],
+        "title": "ImportOut"
+      },
+      "ImportedItemOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "track": {
+            "$ref": "#/components/schemas/Form4Track"
+          },
+          "authority_type": {
+            "$ref": "#/components/schemas/AuthorityType"
+          },
+          "standard": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Standard"
+          },
+          "appendix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appendix"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "not_needed": {
+            "type": "boolean",
+            "title": "Not Needed"
+          },
+          "match_requirement_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Requirement Id"
+          },
+          "match_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Title"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "requirement_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requirement Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "number",
+          "title",
+          "track",
+          "authority_type",
+          "standard",
+          "appendix",
+          "notes",
+          "due_date",
+          "not_needed",
+          "match_requirement_id",
+          "match_title",
+          "status",
+          "requirement_id"
+        ],
+        "title": "ImportedItemOut"
       },
       "InboxCounts": {
         "properties": {
@@ -6005,6 +6900,46 @@
               }
             ],
             "title": "Permit Committee"
+          },
+          "plot_number": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 32
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plot Number"
+          },
+          "buildings": {
+            "type": "integer",
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Buildings",
+            "default": 1
+          },
+          "units": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 5000.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units"
+          },
+          "features": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectFeature"
+            },
+            "type": "array",
+            "title": "Features",
+            "default": []
           }
         },
         "type": "object",
@@ -6133,6 +7068,39 @@
           "permit_status": {
             "$ref": "#/components/schemas/PermitStatus"
           },
+          "plot_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plot Number"
+          },
+          "buildings": {
+            "type": "integer",
+            "title": "Buildings"
+          },
+          "units": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units"
+          },
+          "features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Features"
+          },
           "role": {
             "$ref": "#/components/schemas/ProjectRole"
           },
@@ -6172,6 +7140,10 @@
           "locality_code",
           "municipality_code",
           "permit_status",
+          "plot_number",
+          "buildings",
+          "units",
+          "features",
           "role",
           "build",
           "stages",
@@ -6179,6 +7151,27 @@
           "inbox"
         ],
         "title": "ProjectDetail"
+      },
+      "ProjectFeature": {
+        "type": "string",
+        "enum": [
+          "basement",
+          "pool",
+          "elevator",
+          "gas",
+          "solar_heater",
+          "stone_cladding",
+          "retaining_walls",
+          "acoustic_ceiling",
+          "gypsum_ceiling",
+          "steel_fences",
+          "sprinklers",
+          "parking",
+          "commercial",
+          "developer_neighborhood"
+        ],
+        "title": "ProjectFeature",
+        "description": "What the building has; items that depend on a feature apply only when it's there."
       },
       "ProjectOut": {
         "properties": {
@@ -6299,6 +7292,39 @@
           "permit_status": {
             "$ref": "#/components/schemas/PermitStatus"
           },
+          "plot_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plot Number"
+          },
+          "buildings": {
+            "type": "integer",
+            "title": "Buildings"
+          },
+          "units": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units"
+          },
+          "features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Features"
+          },
           "role": {
             "$ref": "#/components/schemas/ProjectRole"
           },
@@ -6325,6 +7351,10 @@
           "locality_code",
           "municipality_code",
           "permit_status",
+          "plot_number",
+          "buildings",
+          "units",
+          "features",
           "role",
           "build"
         ],
@@ -6347,6 +7377,101 @@
           "archived"
         ],
         "title": "ProjectStatus"
+      },
+      "ProjectUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 300
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "plot_number": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 32
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plot Number"
+          },
+          "gush": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 32
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gush"
+          },
+          "helka": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 32
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Helka"
+          },
+          "units": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 5000.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units"
+          },
+          "features": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ProjectFeature"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Features"
+          }
+        },
+        "type": "object",
+        "title": "ProjectUpdate",
+        "description": "Details that can change during the project. Changing the features re-evaluates which\nitems apply."
       },
       "PublicRequestOut": {
         "properties": {
@@ -6771,6 +7896,103 @@
         ],
         "title": "RequestStatus"
       },
+      "RequirementCreate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "track": {
+            "$ref": "#/components/schemas/Form4Track",
+            "default": "municipality"
+          },
+          "stage": {
+            "type": "string",
+            "title": "Stage",
+            "default": "form4"
+          },
+          "authority_type": {
+            "$ref": "#/components/schemas/AuthorityType",
+            "default": "municipality"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "documents": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Documents",
+            "default": []
+          },
+          "appendix": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 32
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appendix"
+          },
+          "standard": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Standard"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "RequirementCreate",
+        "description": "A step the team adds to the file: one of their authority's own items."
+      },
       "RequirementList": {
         "properties": {
           "stages": {
@@ -6799,6 +8021,8 @@
         "type": "string",
         "enum": [
           "template",
+          "user",
+          "authority_list",
           "permit_condition",
           "city_list"
         ],
@@ -6931,6 +8155,84 @@
             "type": "array",
             "title": "Check Issues",
             "default": []
+          },
+          "track": {
+            "$ref": "#/components/schemas/Form4Track",
+            "default": "municipality"
+          },
+          "appendix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appendix"
+          },
+          "standard": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Standard"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "applies_if": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Applies If",
+            "default": []
+          },
+          "fulfilled_by_track": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Form4Track"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "building": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Building"
           }
         },
         "type": "object",
@@ -6971,6 +8273,119 @@
           "not_applicable"
         ],
         "title": "RequirementStatus"
+      },
+      "RequirementUpdate": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 300,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "track": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Form4Track"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "authority_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AuthorityType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "documents": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Documents"
+          },
+          "appendix": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 32
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appendix"
+          },
+          "standard": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Standard"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "title": "RequirementUpdate"
       },
       "ScanOut": {
         "properties": {
@@ -7877,6 +9292,47 @@
           "expires_in"
         ],
         "title": "TokenOut"
+      },
+      "TrackSummary": {
+        "properties": {
+          "track": {
+            "$ref": "#/components/schemas/Form4Track"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "done": {
+            "type": "integer",
+            "title": "Done"
+          },
+          "with_files": {
+            "type": "integer",
+            "title": "With Files"
+          },
+          "fulfils": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Fulfils"
+          },
+          "complete": {
+            "type": "boolean",
+            "title": "Complete"
+          }
+        },
+        "type": "object",
+        "required": [
+          "track",
+          "total",
+          "done",
+          "with_files",
+          "fulfils",
+          "complete"
+        ],
+        "title": "TrackSummary"
       },
       "UploadRequest": {
         "properties": {

@@ -1,7 +1,8 @@
-"""Is this document what the step needs? Claude reads it; text rules are the fallback.
+"""Is this the document the Form 4 file needs? Claude reads it; text rules are the fallback.
 
-The check answers what an authority clerk would ask before accepting a document: is it the
-right kind, is it signed and stamped, is it about this property, is it still valid.
+The check is about the file, not the work: is it the right kind of document for the item, is
+it about this property (address, gush/helka, plot, permit), is it signed where a form must be
+signed, is it still valid. Judging the quality of the construction is the engineers' job.
 """
 
 import base64
@@ -39,6 +40,7 @@ class Facts:
     helka: str | None
     permit_number: str | None
     today: date
+    plot_number: str | None = None
 
 
 class CheckResult(BaseModel):
@@ -60,9 +62,12 @@ class CheckResult(BaseModel):
 # --- Claude ---------------------------------------------------------------------------
 
 SYSTEM = """\
-You check documents for a private house in Israel on its way to Form 4 (טופס 4), the way the \
-local authority's clerk would before accepting them. The homeowner isn't an expert: your \
-check tells them whether this file is good to go or what exactly is wrong.
+You check documents filed for a construction project's Form 4 (טופס 4) file in Israel, the way \
+the authority's clerk would before accepting them into the file: is it the right document for \
+this item, and does it belong to this property? You do not judge the quality of the \
+construction or the engineering; that is the professionals' responsibility. The people using \
+this aren't experts: your check tells them whether this file is good to go or what exactly is \
+missing from it.
 
 You get the step the document was filed under, the documents that step needs, and the \
 project's identifiers. Decide:
@@ -71,8 +76,9 @@ project's identifiers. Decide:
 listed; empty if none.
 - signed / stamped: "yes", "no", "unclear", or "not_needed" when this kind of document isn't \
 signed or stamped (a photo of the site, a drawing file).
-- project_match: "yes" if the document names this property (address, gush/helka, permit \
-number) consistently; "no" if it names a different property; "unclear" if it names none.
+- project_match: "yes" if the document names this property (address, gush/helka, plot \
+(מגרש), permit number) consistently; "no" if it names a different property; "unclear" if it \
+names none.
 - issued_date and valid_until (YYYY-MM-DD) when written in the document; null otherwise.
 - issues_he: each concrete problem, in plain Hebrew a homeowner can act on (for example \
 "המסמך לא חתום על ידי המודד", "בתוקף עד 01/03/2026 - פג תוקף", "רשום גוש 6590 ולא 6587").
@@ -137,6 +143,7 @@ async def _with_claude(
             "gush": facts.gush,
             "helka": facts.helka,
             "permit_number": facts.permit_number,
+            "plot": facts.plot_number,
         },
         "today": facts.today.isoformat(),
         "file_name": file_name,
@@ -217,6 +224,13 @@ def with_rules(file_name: str, content_type: str, data: bytes, facts: Facts) -> 
         else:
             match = "no"
             issues.append(f"רשום במסמך גוש {gush}, והפרויקט בגוש {facts.gush}")
+    plot = _labelled("מגרש", r"\d{1,6}", text)
+    if facts.plot_number and plot:
+        if plot == facts.plot_number and match != "no":
+            match = "yes"
+        elif plot != facts.plot_number:
+            match = "no"
+            issues.append(f"רשום במסמך מגרש {plot}, והפרויקט במגרש {facts.plot_number}")
     if facts.permit_number and facts.permit_number in text and match != "no":
         match = "yes"
     valid_until = _labelled_date(r"בתוקף עד|תוקף עד|תוקף ה\w+", text)
@@ -231,7 +245,7 @@ def with_rules(file_name: str, content_type: str, data: bytes, facts: Facts) -> 
         summary = "המסמך מתייחס לפרויקט הזה."
     else:
         verdict = CheckVerdict.warning
-        summary = "לא נמצאו במסמך פרטי הפרויקט (גוש, חלקה או מספר היתר). כדאי לוודא."
+        summary = "לא נמצאו במסמך פרטי הפרויקט (גוש, חלקה, מגרש או מספר היתר). כדאי לוודא."
     return CheckResult(
         verdict=verdict,
         satisfies=satisfies,

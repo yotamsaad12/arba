@@ -117,9 +117,10 @@ async def _read(db: AsyncSession, storage: Storage, project: Project) -> None:
             continue
         match = refs.get(c.matches or "")
         if match is None and c.authority_type not in _TOO_BROAD:
-            match = next(
-                (r for r in unique if r.authority_type == c.authority_type and r.stage == c.stage),
-                None,
+            # The same body's step, preferably in the same stage.
+            same_body = [r for r in unique if r.authority_type == c.authority_type]
+            match = next((r for r in same_body if r.stage == c.stage), None) or next(
+                iter(same_body), None
             )
         db.add(
             PermitCondition(

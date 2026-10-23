@@ -187,6 +187,7 @@ async def build(db: AsyncSession, user: User) -> Project:
             floors=2,
             gush="6587",
             helka="112",
+            plot_number="57",
             permit_number="20250412",
             permit_request_number="1022334455",
             permit_issue_date=date(2025, 11, 10),
@@ -280,26 +281,19 @@ async def build(db: AsyncSession, user: User) -> Project:
         "plans.pdf",
         by=user,
     )
+    # The foundations' concrete certificates are in; floor 1's are being collected.
     await _file(
         db,
         project,
-        await _step(db, project, "contract"),
-        "חוזה עם הקבלן - א.ב. בנייה.pdf",
-        "contract.pdf",
+        await _step(db, project, "concrete_foundations"),
+        "תעודות בטון - יסודות.pdf",
+        "concrete.pdf",
         by=user,
     )
-    await _file(
-        db,
-        project,
-        await _step(db, project, "excavation"),
-        "דוח יועץ קרקע.pdf",
-        "soil.pdf",
-        by=user,
-    )
-    for key in ("formwork", "sleeves"):
-        await change_status(db, project, (await _step(db, project, key, 1)).id, S.done, user)
-    rebar = await _step(db, project, "rebar", 1)
-    await change_status(db, project, rebar.id, S.in_progress, user)
+    floor_1 = await _step(db, project, "concrete_floor", 1)
+    await change_status(db, project, floor_1.id, S.in_progress, user)
+    # The frame declaration for the Home Front Command file is what the engineer is asked for.
+    declaration = await _step(db, project, "hfc_structure")
 
     # The team, and their answers through upload links.
     surveyor = await add_contact(
@@ -361,14 +355,16 @@ async def build(db: AsyncSession, user: User) -> Project:
         project,
         user,
         RequestCreate(
-            requirement_id=rebar.id, contact_id=engineer.id, documents=["אישור קונסטרוקטור"]
+            requirement_id=declaration.id,
+            contact_id=engineer.id,
+            documents=["תצהיר אחראי לביצוע השלד"],
         ),
     )
     await _file(
         db,
         project,
-        rebar,
-        "אישור ברזל קומה 1.pdf",
+        declaration,
+        "תצהיר אחראי שלד.pdf",
         "rebar_wrong.pdf",
         uploader=engineer.name,
         request=asked_rebar,

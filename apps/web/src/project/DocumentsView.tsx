@@ -2,6 +2,7 @@ import type { DocumentOut, Requirement, Stage, Suggestion } from "@arba/api-clie
 import { AnimatePresence, motion } from "motion/react";
 import { useMemo, useRef, useState, type DragEvent } from "react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router";
 import { useCelebrate } from "../components/Celebrations";
 import { Alert, Button, Spinner, cx } from "../components/ui";
 import { $api, api, invalidateProjects } from "../lib/api";
@@ -162,6 +163,15 @@ function DocumentRow({
   const remove = $api.useMutation("delete", "/api/v1/projects/{project_id}/documents/{document_id}", {
     onSuccess: () => void invalidateProjects(),
   });
+  // An authority's list that came by email: read it into the Form 4 file.
+  const [, setSearch] = useSearchParams();
+  const asList = $api.useMutation("post", "/api/v1/projects/{project_id}/checklist/imports/from-document", {
+    onSuccess: async () => {
+      await invalidateProjects();
+      setSearch({ tab: "form4" }, { replace: true });
+    },
+  });
+  const listLike = /\.(xlsx|xlsm|pdf|jpe?g|png|webp|txt)$/i.test(d.file_name);
 
   return (
     <motion.li
@@ -189,8 +199,8 @@ function DocumentRow({
           <span>· {formatDateTime(d.created_at)}</span>
         </div>
         {d.requirement_id && <CheckLine status={d.check_status ?? null} summary={d.check_summary ?? null} issues={d.check_issues ?? []} />}
-        {(file.error || remove.error) && (
-          <div className="mt-1 text-xs text-danger">{message(file.error ?? remove.error)}</div>
+        {(file.error || remove.error || asList.error) && (
+          <div className="mt-1 text-xs text-danger">{message(file.error ?? remove.error ?? asList.error)}</div>
         )}
       </div>
       {canEdit && (
@@ -203,6 +213,20 @@ function DocumentRow({
             className="min-w-0 flex-1 sm:w-56 sm:flex-none"
             onChange={(requirement_id) => file.mutate({ params: { path }, body: { requirement_id } })}
           />
+          {listLike && (
+            <Button
+              size="sm"
+              variant="ghost"
+              title={t("imports.fromDocument")}
+              aria-label={t("imports.fromDocument")}
+              disabled={asList.isPending}
+              onClick={() =>
+                asList.mutate({ params: { path: { project_id: projectId } }, body: { document_id: d.id } })
+              }
+            >
+              {asList.isPending ? "…" : "📋"}
+            </Button>
+          )}
           <Button
             size="sm"
             variant="danger"

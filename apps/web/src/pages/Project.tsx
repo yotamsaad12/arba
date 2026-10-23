@@ -14,6 +14,7 @@ import { InboxView } from "../project/InboxView";
 import { AuthoritiesPanel, PermitBanner } from "../project/PermitPanel";
 import { ConditionsCard } from "../project/ConditionsCard";
 import { DraftsPanel } from "../project/DraftsPanel";
+import { Form4View } from "../project/Form4View";
 import { RequestsPanel, TeamPanel } from "../project/TeamPanel";
 import { RequirementCard } from "../project/RequirementCard";
 import { ApprovalsPanel } from "../project/SuggestionCard";
@@ -22,15 +23,21 @@ import { useFocusLabel } from "../scene/useFocusLabel";
 import { LiveWorld } from "../world/LiveWorld";
 import { useAuthorities } from "../world/authorities";
 
-const TABS = ["now", "all", "inbox", "documents"] as const;
+const TABS = ["now", "form4", "all", "inbox", "documents"] as const;
 type Tab = (typeof TABS)[number];
 const TAB_LABEL = {
   now: "project.tabNow",
+  form4: "form4.tab",
   all: "project.tabAll",
   inbox: "project.tabInbox",
   documents: "project.tabDocuments",
 } as const;
-const TAB_SHORT_LABEL = { ...TAB_LABEL, now: "project.tabNowShort", all: "project.tabAllShort" } as const;
+const TAB_SHORT_LABEL = {
+  ...TAB_LABEL,
+  now: "project.tabNowShort",
+  form4: "form4.tabShort",
+  all: "project.tabAllShort",
+} as const;
 
 export function ProjectPage() {
   const { projectId = "" } = useParams();
@@ -75,7 +82,7 @@ export function ProjectPage() {
       <StageStepper project={p} onSelect={goToStage} />
 
       <LayoutGroup id="tabs">
-        <nav className="relative grid grid-cols-4 rounded-full border-2 border-ink bg-surface p-1" role="tablist">
+        <nav className="relative grid grid-cols-5 rounded-full border-2 border-ink bg-surface p-1" role="tablist">
           {TABS.map((key) => {
             const badge =
               key === "inbox" ? p.inbox.unread : key === "now" ? (suggestions.data?.length ?? 0) : 0;
@@ -152,6 +159,14 @@ export function ProjectPage() {
             </div>
           )}
           {tab !== "now" && !requirements.data && <Spinner label={t("app.loading")} />}
+          {tab === "form4" && requirements.data && (
+            <Form4View
+              projectId={projectId}
+              project={p}
+              requirements={requirements.data.requirements}
+              canEdit={canEdit}
+            />
+          )}
           {tab === "all" && requirements.data && (
             <AllRequirementsView
               projectId={projectId}

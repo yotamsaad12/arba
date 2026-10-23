@@ -8,7 +8,15 @@ from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.enums import AuthorityType, Channel, ClientType, DependencyKind, Repeat
+from app.core.enums import (
+    AuthorityType,
+    Channel,
+    ClientType,
+    DependencyKind,
+    Form4Track,
+    ProjectFeature,
+    Repeat,
+)
 from app.db.models import Template, TemplateDependency, TemplateRequirement
 from app.modules.requirements.engine import check_acyclic
 
@@ -35,6 +43,26 @@ class RequirementDef(BaseModel):
     gate: bool = False
     depends_on: list[str] = []
     previous_floor: list[str] = []
+    # The Form 4 file: whose list the item is on, its form/appendix number and standard.
+    track: Form4Track | None = None
+    appendix: str | None = None
+    standard: str | None = None
+    # Applies only when the project has all of these features.
+    applies_if: list[ProjectFeature] = []
+    # Done when that authority's whole file is done.
+    fulfilled_by: Form4Track | None = None
+
+    def resolved_track(self) -> Form4Track:
+        if self.track:
+            return self.track
+        return {
+            AuthorityType.water_corporation: Form4Track.water,
+            AuthorityType.fire_department: Form4Track.fire,
+            AuthorityType.home_front_command: Form4Track.home_front,
+        }.get(
+            self.authority,
+            Form4Track.home_front if self.stage == "mamad" else Form4Track.municipality,
+        )
 
 
 class TemplateFile(BaseModel):
@@ -102,6 +130,11 @@ def build_template(spec: TemplateFile) -> tuple[Template, list[TemplateDependenc
             optional=r.optional,
             is_form4_gate=r.gate,
             order=order,
+            track=r.resolved_track(),
+            appendix=r.appendix,
+            standard=r.standard,
+            applies_if=[f.value for f in r.applies_if],
+            fulfilled_by_track=r.fulfilled_by,
         )
     template.requirements = list(rows.values())
     dependencies = [

@@ -138,7 +138,11 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update Project
+         * @description Edits project details. Changing features re-evaluates which items apply.
+         */
+        patch: operations["projects_update_project"];
         trace?: never;
     };
     "/api/v1/projects/{project_id}/requirements": {
@@ -151,7 +155,11 @@ export interface paths {
         /** List Requirements */
         get: operations["projects_list_requirements"];
         put?: never;
-        post?: never;
+        /**
+         * Add Requirement
+         * @description Adds an item to the file, e.g. one the authority asked for that isn't in the template.
+         */
+        post: operations["projects_add_requirement"];
         delete?: never;
         options?: never;
         head?: never;
@@ -193,6 +201,47 @@ export interface paths {
         head?: never;
         /** Update Requirement Status */
         patch: operations["projects_update_requirement_status"];
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/form4": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Form4 File
+         * @description The Form 4 file by authority: how complete each authority's list is.
+         */
+        get: operations["projects_get_form4_file"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/requirements/{requirement_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove Requirement
+         * @description Removes an item someone added or imported (template items are marked not needed).
+         */
+        delete: operations["projects_remove_requirement"];
+        options?: never;
+        head?: never;
+        /** Edit Requirement */
+        patch: operations["projects_edit_requirement"];
         trace?: never;
     };
     "/api/v1/projects/{project_id}/documents": {
@@ -704,6 +753,85 @@ export interface paths {
         get: operations["catch-up_get_scan"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/checklist/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Imports */
+        get: operations["checklist_list_imports"];
+        put?: never;
+        /**
+         * Import List
+         * @description Reads an authority's Form 4 list and proposes, item by item, where it goes. The file
+         *     is kept in the project under the Form 4 list step.
+         */
+        post: operations["checklist_import_list"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/checklist/imports/from-document": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import From Document
+         * @description Reads a list that is already in the project, e.g. an attachment of the authority's email.
+         */
+        post: operations["checklist_import_from_document"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/checklist/imports/{import_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Import */
+        get: operations["checklist_get_import"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/checklist/imports/{import_id}/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply Import
+         * @description Applies the person's decisions (or Arba's proposals as they are).
+         */
+        post: operations["checklist_apply_import"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1241,6 +1369,11 @@ export interface components {
              */
             apply_status: boolean;
         };
+        /** ApplyImport */
+        ApplyImport: {
+            /** Decisions */
+            decisions?: components["schemas"]["ImportDecision"][] | null;
+        };
         /** AttachmentOut */
         AttachmentOut: {
             /**
@@ -1275,6 +1408,11 @@ export interface components {
          * @enum {string}
          */
         AuthorityType: "municipality" | "water_corporation" | "fire_department" | "home_front_command" | "testing_lab" | "surveyor" | "soil_consultant" | "structural_engineer" | "supervising_engineer" | "electrical_inspector" | "gas_installer" | "plumber" | "green_building_lab" | "contractor" | "owner" | "architect";
+        /** Body_checklist_import_list */
+        Body_checklist_import_list: {
+            /** File */
+            file: string;
+        };
         /** Body_permits_extract_permit */
         Body_permits_extract_permit: {
             /** File */
@@ -1585,10 +1723,101 @@ export interface components {
             /** Requirement Id */
             requirement_id: string | null;
         };
+        /**
+         * Form4File
+         * @description The project's Form 4 file, by authority.
+         */
+        Form4File: {
+            /** Tracks */
+            tracks: components["schemas"]["TrackSummary"][];
+            /** Total */
+            total: number;
+            /** Done */
+            done: number;
+        };
+        /**
+         * Form4Track
+         * @description Whose Form 4 file an item belongs to. Each authority keeps its own list and gives its
+         *     own approval; the municipality's file then needs those approvals.
+         * @enum {string}
+         */
+        Form4Track: "municipality" | "fire" | "home_front" | "water" | "electricity" | "telecom" | "gas" | "developer" | "accessibility";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** ImportDecision */
+        ImportDecision: {
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "merge" | "add" | "skip";
+            /** Requirement Id */
+            requirement_id?: string | null;
+        };
+        /** ImportFromDocument */
+        ImportFromDocument: {
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+        };
+        /** ImportOut */
+        ImportOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** File Name */
+            file_name: string;
+            track: components["schemas"]["Form4Track"] | null;
+            /** Source */
+            source: string;
+            /** Applied At */
+            applied_at: string | null;
+            /** Items */
+            items: components["schemas"]["ImportedItemOut"][];
+        };
+        /** ImportedItemOut */
+        ImportedItemOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Number */
+            number: string | null;
+            /** Title */
+            title: string;
+            track: components["schemas"]["Form4Track"];
+            authority_type: components["schemas"]["AuthorityType"];
+            /** Standard */
+            standard: string | null;
+            /** Appendix */
+            appendix: string | null;
+            /** Notes */
+            notes: string | null;
+            /** Due Date */
+            due_date: string | null;
+            /** Not Needed */
+            not_needed: boolean;
+            /** Match Requirement Id */
+            match_requirement_id: string | null;
+            /** Match Title */
+            match_title: string | null;
+            /** Status */
+            status: string;
+            /** Requirement Id */
+            requirement_id: string | null;
         };
         /** InboxCounts */
         InboxCounts: {
@@ -1910,6 +2139,20 @@ export interface components {
             permit_valid_until?: string | null;
             /** Permit Committee */
             permit_committee?: string | null;
+            /** Plot Number */
+            plot_number?: string | null;
+            /**
+             * Buildings
+             * @default 1
+             */
+            buildings: number;
+            /** Units */
+            units?: number | null;
+            /**
+             * Features
+             * @default []
+             */
+            features: components["schemas"]["ProjectFeature"][];
         };
         /** ProjectDetail */
         ProjectDetail: {
@@ -1950,6 +2193,14 @@ export interface components {
             /** Municipality Code */
             municipality_code: number | null;
             permit_status: components["schemas"]["PermitStatus"];
+            /** Plot Number */
+            plot_number: string | null;
+            /** Buildings */
+            buildings: number;
+            /** Units */
+            units: number | null;
+            /** Features */
+            features: string[];
             role: components["schemas"]["ProjectRole"];
             build: components["schemas"]["BuildState"];
             /** Stages */
@@ -1957,6 +2208,12 @@ export interface components {
             permit: components["schemas"]["PermitOut"];
             inbox: components["schemas"]["InboxCounts"];
         };
+        /**
+         * ProjectFeature
+         * @description What the building has; items that depend on a feature apply only when it's there.
+         * @enum {string}
+         */
+        ProjectFeature: "basement" | "pool" | "elevator" | "gas" | "solar_heater" | "stone_cladding" | "retaining_walls" | "acoustic_ceiling" | "gypsum_ceiling" | "steel_fences" | "sprinklers" | "parking" | "commercial" | "developer_neighborhood";
         /** ProjectOut */
         ProjectOut: {
             /**
@@ -1996,6 +2253,14 @@ export interface components {
             /** Municipality Code */
             municipality_code: number | null;
             permit_status: components["schemas"]["PermitStatus"];
+            /** Plot Number */
+            plot_number: string | null;
+            /** Buildings */
+            buildings: number;
+            /** Units */
+            units: number | null;
+            /** Features */
+            features: string[];
             role: components["schemas"]["ProjectRole"];
             build: components["schemas"]["BuildState"];
         };
@@ -2009,6 +2274,27 @@ export interface components {
          * @enum {string}
          */
         ProjectStatus: "active" | "completed" | "archived";
+        /**
+         * ProjectUpdate
+         * @description Details that can change during the project. Changing the features re-evaluates which
+         *     items apply.
+         */
+        ProjectUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Address */
+            address?: string | null;
+            /** Plot Number */
+            plot_number?: string | null;
+            /** Gush */
+            gush?: string | null;
+            /** Helka */
+            helka?: string | null;
+            /** Units */
+            units?: number | null;
+            /** Features */
+            features?: components["schemas"]["ProjectFeature"][] | null;
+        };
         /** PublicRequestOut */
         PublicRequestOut: {
             /** Project Name */
@@ -2160,6 +2446,38 @@ export interface components {
          * @enum {string}
          */
         RequestStatus: "open" | "fulfilled" | "cancelled";
+        /**
+         * RequirementCreate
+         * @description A step the team adds to the file: one of their authority's own items.
+         */
+        RequirementCreate: {
+            /** Title */
+            title: string;
+            /** @default municipality */
+            track: components["schemas"]["Form4Track"];
+            /**
+             * Stage
+             * @default form4
+             */
+            stage: string;
+            /** @default municipality */
+            authority_type: components["schemas"]["AuthorityType"];
+            /** Description */
+            description?: string | null;
+            /**
+             * Documents
+             * @default []
+             */
+            documents: string[];
+            /** Appendix */
+            appendix?: string | null;
+            /** Standard */
+            standard?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Notes */
+            notes?: string | null;
+        };
         /** RequirementList */
         RequirementList: {
             /** Stages */
@@ -2171,7 +2489,7 @@ export interface components {
          * RequirementOrigin
          * @enum {string}
          */
-        RequirementOrigin: "template" | "permit_condition" | "city_list";
+        RequirementOrigin: "template" | "user" | "authority_list" | "permit_condition" | "city_list";
         /** RequirementOut */
         RequirementOut: {
             /**
@@ -2218,12 +2536,49 @@ export interface components {
              * @default []
              */
             check_issues: string[];
+            /** @default municipality */
+            track: components["schemas"]["Form4Track"];
+            /** Appendix */
+            appendix?: string | null;
+            /** Standard */
+            standard?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /**
+             * Applies If
+             * @default []
+             */
+            applies_if: string[];
+            fulfilled_by_track?: components["schemas"]["Form4Track"] | null;
+            /** Building */
+            building?: number | null;
         };
         /**
          * RequirementStatus
          * @enum {string}
          */
         RequirementStatus: "not_started" | "blocked" | "ready" | "in_progress" | "waiting_for_authority" | "needs_fix" | "done" | "not_applicable";
+        /** RequirementUpdate */
+        RequirementUpdate: {
+            /** Title */
+            title?: string | null;
+            track?: components["schemas"]["Form4Track"] | null;
+            authority_type?: components["schemas"]["AuthorityType"] | null;
+            /** Description */
+            description?: string | null;
+            /** Documents */
+            documents?: string[] | null;
+            /** Appendix */
+            appendix?: string | null;
+            /** Standard */
+            standard?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Notes */
+            notes?: string | null;
+        };
         /** ScanOut */
         ScanOut: {
             /**
@@ -2533,6 +2888,20 @@ export interface components {
             expires_in: number;
             /** Refresh Token */
             refresh_token?: string | null;
+        };
+        /** TrackSummary */
+        TrackSummary: {
+            track: components["schemas"]["Form4Track"];
+            /** Total */
+            total: number;
+            /** Done */
+            done: number;
+            /** With Files */
+            with_files: number;
+            /** Fulfils */
+            fulfils: string[];
+            /** Complete */
+            complete: boolean;
         };
         /** UploadRequest */
         UploadRequest: {
@@ -2859,6 +3228,41 @@ export interface operations {
             };
         };
     };
+    projects_update_project: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     projects_list_requirements: {
         parameters: {
             query?: never;
@@ -2877,6 +3281,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RequirementList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    projects_add_requirement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequirementCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequirementOut"];
                 };
             };
             /** @description Validation Error */
@@ -2934,6 +3373,103 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["StatusUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequirementOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    projects_get_form4_file: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Form4File"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    projects_remove_requirement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                requirement_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    projects_edit_requirement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                requirement_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequirementUpdate"];
             };
         };
         responses: {
@@ -3946,6 +4482,175 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScanOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    checklist_list_imports: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    checklist_import_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_checklist_import_list"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    checklist_import_from_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportFromDocument"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    checklist_get_import: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    checklist_apply_import: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplyImport"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
                 };
             };
             /** @description Validation Error */

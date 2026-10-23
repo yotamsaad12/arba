@@ -56,6 +56,7 @@ async def check_document(db: AsyncSession, storage: Storage, document: Document)
             helka=project.helka,
             permit_number=project.permit_number,
             today=date.today(),
+            plot_number=project.plot_number,
         ),
     )
     document.check_status = result.verdict

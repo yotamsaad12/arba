@@ -1,4 +1,4 @@
-import type { Locality, PermitFields } from "@arba/api-client";
+import type { Locality, PermitFields, ProjectFeature } from "@arba/api-client";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState, type DragEvent, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
@@ -8,6 +8,7 @@ import { Alert, BrutalCard, Button, Card, Field, Input, Spinner, cx } from "../c
 import { $api, api, invalidateProjects } from "../lib/api";
 import { uploadFile } from "../lib/upload";
 import { useErrorMessage } from "../lib/useErrorMessage";
+import { FeatureChips } from "../project/Form4View";
 import { LocalityPicker } from "../project/LocalityPicker";
 import { STAGES, STAGE_ICON, type StageKey } from "../scene/model";
 
@@ -22,6 +23,9 @@ interface Details {
   floors: number;
   gush: string;
   helka: string;
+  plot_number: string;
+  buildings: number;
+  units: string;
   template_id: string;
   permit_number: string;
   permit_request_number: string;
@@ -36,6 +40,9 @@ const EMPTY: Details = {
   floors: 1,
   gush: "",
   helka: "",
+  plot_number: "",
+  buildings: 1,
+  units: "",
   template_id: "",
   permit_number: "",
   permit_request_number: "",
@@ -57,7 +64,9 @@ export function NewProjectPage() {
   const [creating, setCreating] = useState(false);
   const [nowAt, setNowAt] = useState<StageKey | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [features, setFeatures] = useState<ReadonlySet<ProjectFeature>>(new Set());
   const form = useForm<Details>({ defaultValues: EMPTY });
+  const developer = templates.data?.find((tpl) => tpl.id === form.watch("template_id"))?.client_type === "business";
 
   useEffect(() => {
     const only = templates.data?.length === 1 ? templates.data[0] : undefined;
@@ -109,6 +118,10 @@ export function NewProjectPage() {
         floors: Number(v.floors) || 1,
         gush: orNull(v.gush),
         helka: orNull(v.helka),
+        plot_number: orNull(v.plot_number),
+        buildings: developer ? Number(v.buildings) || 1 : 1,
+        units: developer && v.units ? Number(v.units) : null,
+        features: [...features],
         permit_number: orNull(v.permit_number),
         permit_request_number: orNull(v.permit_request_number),
         permit_issue_date: orNull(v.permit_issue_date),
@@ -256,12 +269,15 @@ export function NewProjectPage() {
               <Field label={t("projects.floors")} hint={t("projects.floorsHint")}>
                 <Input type="number" inputMode="numeric" min={1} max={60} {...form.register("floors", { valueAsNumber: true })} />
               </Field>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <Field label={t("projects.gush")}>
                   <Input inputMode="numeric" {...field("gush")} />
                 </Field>
                 <Field label={t("projects.helka")}>
                   <Input inputMode="numeric" {...field("helka")} />
+                </Field>
+                <Field label={t("form4.plot")}>
+                  <Input {...field("plot_number")} />
                 </Field>
               </div>
             </Card>
@@ -299,6 +315,33 @@ export function NewProjectPage() {
                 </label>
               ))}
             </fieldset>
+            {developer && (
+              <Card className="grid grid-cols-2 gap-3">
+                <Field label={t("form4.buildings")} hint={t("projects.buildingsHint")}>
+                  <Input type="number" inputMode="numeric" min={1} max={50} {...form.register("buildings", { valueAsNumber: true })} />
+                </Field>
+                <Field label={t("form4.units")}>
+                  <Input type="number" inputMode="numeric" min={1} {...field("units")} />
+                </Field>
+              </Card>
+            )}
+            <Card className="space-y-3">
+              <div>
+                <div className="font-display text-lg font-extrabold">🧩 {t("form4.features")}</div>
+                <p className="text-sm text-ink-soft">{t("form4.featuresHint")}</p>
+              </div>
+              <FeatureChips
+                value={features}
+                onToggle={(feature) =>
+                  setFeatures((current) => {
+                    const next = new Set(current);
+                    if (next.has(feature)) next.delete(feature);
+                    else next.add(feature);
+                    return next;
+                  })
+                }
+              />
+            </Card>
             {error && <Alert>{error}</Alert>}
             <div className="flex flex-wrap gap-3">
               <Button type="submit" disabled={creating}>

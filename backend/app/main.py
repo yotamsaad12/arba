@@ -9,6 +9,7 @@ from fastapi.routing import APIRoute
 from app.api.v1 import (
     auth,
     catchup,
+    checklist,
     cron,
     dev,
     directory,
@@ -89,6 +90,7 @@ def create_app() -> FastAPI:
     v1.include_router(permits.router)
     v1.include_router(directory.router)
     v1.include_router(catchup.router)
+    v1.include_router(checklist.router)
     v1.include_router(outreach.router)
     v1.include_router(cron.router)
     v1.include_router(team.router)
