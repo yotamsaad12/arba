@@ -16,9 +16,10 @@ from app.core.config import settings
 from app.core.deps import DB
 from app.core.errors import AppError
 from app.core.storage import get_storage
-from app.db.models import InboundEmail
+from app.db.models import InboundEmail, Message
 from app.db.session import SessionLocal
 from app.email.processing import process_inbound, raw_key
+from app.modules.checks.service import check_pending
 from app.modules.notifications.whatsapp_actions import handle as handle_whatsapp
 from app.modules.suggestions.service import get_classifier, suggest_for_message
 from app.whatsapp.client import get_whatsapp
@@ -97,6 +98,10 @@ async def _process(inbound_id: uuid.UUID) -> None:
             await suggest_for_message(db, storage, get_classifier(), message_id)
         except Exception:
             log.exception("could not suggest filing for message %s", message_id)
+        # Attachments of a conversation already filed under a step are checked right away.
+        message = await db.get(Message, message_id)
+        if message is not None:
+            await check_pending(db, storage, message.project_id)
 
 
 @router.get("/whatsapp", response_class=PlainTextResponse)

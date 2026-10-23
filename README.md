@@ -96,6 +96,19 @@ requests only on their website get the text ready to paste. With
 `ARBA_EMAIL_ALLOWED_RECIPIENTS` set (dev with a real mail server), letters go to the first
 allowed address instead of the authority, marked as a test.
 
+### Professionals and document checks
+
+- **Requests to professionals.** From a step, the person asks the surveyor, engineer, lab or
+  contractor for documents. They get an email and/or WhatsApp with a personal link
+  (`/r/<token>`): a mobile page that shows what is asked, for which project and step, and takes
+  uploads with no account. Files go straight into the step; the person is told; open requests
+  are sent again every 3 days (up to 3 reminders). The team is kept per project.
+- **Document checks.** Every document filed under a step is checked: the right kind for the
+  step, signed and stamped, about this property (address, gush/helka, permit number), still
+  valid. Claude reads the document; without an API key, text rules check the identifiers and
+  expiry dates in PDFs. Problems are shown on the step and notified; when all the documents a
+  step needs are in and check out, Arba proposes marking it done (one tap, also on WhatsApp).
+
 ### Projects already under way
 
 When a project started before Arba, the person says which stage it is at; Arba marks the
@@ -133,6 +146,8 @@ backend/               FastAPI, SQLAlchemy, Alembic
   app/modules/directory/data/             localities, committees and contacts of approving bodies
   app/modules/permits/                    reading and checking the building permit
   app/modules/catchup/                    projects already under way: mailbox scan, gap report
+  app/modules/team/                       the project team and upload links for professionals
+  app/modules/checks/                     checking documents filed under a step
 infra/                 docker-compose for local services
 ```
 

@@ -8,6 +8,7 @@ from app.core.deps import DB, CurrentUser
 from app.core.enums import ProjectRole
 from app.core.storage import get_storage
 from app.db.session import SessionLocal
+from app.modules.checks.service import check_in_background
 from app.modules.documents import service
 from app.modules.documents.schemas import (
     DocumentOut,
@@ -58,6 +59,8 @@ async def complete_upload(
     document = await service.complete_upload(db, storage, project, user, document_id)
     if document.requirement_id is None:
         background.add_task(_suggest, document.id)
+    else:
+        background.add_task(check_in_background, project.id, storage)
     return service.to_out(storage, document, user.name)
 
 
@@ -71,10 +74,16 @@ async def _suggest(document_id: uuid.UUID) -> None:
 
 @router.patch("/{document_id}")
 async def file_document(
-    project_id: uuid.UUID, document_id: uuid.UUID, data: FileDocument, db: DB, user: CurrentUser
+    project_id: uuid.UUID,
+    document_id: uuid.UUID,
+    data: FileDocument,
+    db: DB,
+    user: CurrentUser,
+    background: BackgroundTasks,
 ) -> DocumentOut:
     project, _ = await get_project_for_user(db, project_id, user, ProjectRole.manager)
     document = await service.file_document(db, project, user, document_id, data.requirement_id)
+    background.add_task(check_in_background, project.id, get_storage())
     return service.to_out(get_storage(), document)
 
 

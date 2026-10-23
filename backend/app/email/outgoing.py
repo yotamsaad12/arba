@@ -25,13 +25,24 @@ _BUTTON = (
 _FOOTER = "font-size:12px;color:#5d6475"
 
 
+NOTIFICATION_FOOTER = "אפשר לשנות את ההתראות בהגדרות החשבון."
+
+
 def build(
-    to: str, subject: str, text: str, link: str | None, button: str = "פתיחה ב-Arba"
+    to: str,
+    subject: str,
+    text: str,
+    link: str | None,
+    button: str = "פתיחה ב-Arba",
+    footer: str = NOTIFICATION_FOOTER,
+    reply_to: str | None = None,
 ) -> EmailMessage:
     message = EmailMessage()
     message["From"] = settings.email_from
     message["To"] = to
     message["Subject"] = subject
+    if reply_to:
+        message["Reply-To"] = reply_to
     message.set_content(f"{text}\n\n{link}" if link else text)
 
     paragraphs = "".join(
@@ -48,7 +59,7 @@ def build(
         f'<div style="{_WRAP}"><div style="{_LOGO}">Arba</div>'
         f'<div style="{_CARD}"><h2 style="margin:0 0 12px">{html.escape(subject)}</h2>'
         f"{paragraphs}{action}</div>"
-        f'<p style="{_FOOTER}">אפשר לשנות את ההתראות בהגדרות החשבון.</p></div></body></html>',
+        f'<p style="{_FOOTER}">{html.escape(footer)}</p></div></body></html>',
         subtype="html",
     )
     return message

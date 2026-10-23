@@ -147,6 +147,20 @@ DRAFT_READY_PORTAL = Template(
     ),
 )
 
+DOCUMENT_REQUEST = Template(
+    name="arba_document_request",
+    category="UTILITY",
+    body=(
+        "שלום {{1}}, {{2}} מבקשים ממך מסמכים עבור {{3}}.\nאפשר להעלות אותם כאן, בלי הרשמה: {{4}}"
+    ),
+    examples=(
+        "משה",
+        "דנה כהן",
+        "הבית ברעננה · סימון המבנה במגרש",
+        "https://app.arba.co.il/r/abc123",
+    ),
+)
+
 ALL = (
     VERIFY_CODE,
     WELCOME,
@@ -155,6 +169,7 @@ ALL = (
     IMPORT_FINISHED,
     DRAFT_READY,
     DRAFT_READY_PORTAL,
+    DOCUMENT_REQUEST,
 )
 BY_NAME = {t.name: t for t in ALL}
 

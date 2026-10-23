@@ -6,7 +6,7 @@ from app.core.deps import DB, CurrentUser
 from app.core.enums import ProjectRole
 from app.core.enums import RequirementStatus as S
 from app.db.models import Project, Requirement
-from app.modules.documents.service import document_counts
+from app.modules.documents.service import document_counts, document_issues
 from app.modules.inbox.service import counts as inbox_counts
 from app.modules.permits.service import permit_out
 from app.modules.projects import service
@@ -77,6 +77,7 @@ def _requirement_out(
     result: EngineResult[uuid.UUID],
     critical: set[uuid.UUID],
     documents: dict[uuid.UUID, int],
+    issues: dict[uuid.UUID, list[str]] | None = None,
 ) -> RequirementOut:
     return RequirementOut(
         id=r.id,
@@ -99,6 +100,7 @@ def _requirement_out(
         on_critical_path=r.id in critical,
         document_count=documents.get(r.id, 0),
         origin=r.origin,
+        check_issues=(issues or {}).get(r.id, []),
     )
 
 
@@ -133,9 +135,12 @@ async def list_requirements(project_id: uuid.UUID, db: DB, user: CurrentUser) ->
     result = requirements_service.run_engine(requirements, deps)
     critical = set(result.critical_path)
     counts = await document_counts(db, project.id)
+    issues = await document_issues(db, project.id)
     return RequirementList(
         stages=stages_of(project),
-        requirements=[_requirement_out(r, deps, result, critical, counts) for r in requirements],
+        requirements=[
+            _requirement_out(r, deps, result, critical, counts, issues) for r in requirements
+        ],
     )
 
 
@@ -147,7 +152,8 @@ async def next_steps(project_id: uuid.UUID, db: DB, user: CurrentUser) -> NextSt
     result = requirements_service.run_engine(requirements, deps)
     critical = set(result.critical_path)
     counts = await document_counts(db, project.id)
-    out = {r.id: _requirement_out(r, deps, result, critical, counts) for r in requirements}
+    issues = await document_issues(db, project.id)
+    out = {r.id: _requirement_out(r, deps, result, critical, counts, issues) for r in requirements}
 
     def having(*statuses: S) -> list[RequirementOut]:
         return [out[r.id] for r in requirements if r.status in statuses]
@@ -182,4 +188,5 @@ async def update_requirement_status(
     result = requirements_service.run_engine(requirements, deps)
     requirement = next(r for r in requirements if r.id == requirement_id)
     counts = await document_counts(db, project.id)
-    return _requirement_out(requirement, deps, result, set(result.critical_path), counts)
+    issues = await document_issues(db, project.id)
+    return _requirement_out(requirement, deps, result, set(result.critical_path), counts, issues)

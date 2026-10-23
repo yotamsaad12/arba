@@ -3,7 +3,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from app.core.enums import DocumentSource
+from app.core.enums import CheckVerdict, DocumentSource
 
 
 class DocumentOut(BaseModel):
@@ -16,6 +16,10 @@ class DocumentOut(BaseModel):
     message_id: uuid.UUID | None
     created_at: datetime
     uploaded_by_name: str | None
+    # Arba's check, once the document is filed under a step (null: not checked yet).
+    check_status: CheckVerdict | None = None
+    check_summary: str | None = None
+    check_issues: list[str] = []
     # Short-lived; refetch the list rather than storing it.
     download_url: str
 

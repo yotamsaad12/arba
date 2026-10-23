@@ -824,6 +824,177 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Contacts
+         * @description The professionals on the project.
+         */
+        get: operations["team_list_contacts"];
+        put?: never;
+        /** Add Contact */
+        post: operations["team_add_contact"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/contacts/{contact_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Contact */
+        put: operations["team_update_contact"];
+        post?: never;
+        /** Delete Contact */
+        delete: operations["team_delete_contact"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/document-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Requests
+         * @description Open requests, and those answered in the last two weeks.
+         */
+        get: operations["team_list_requests"];
+        put?: never;
+        /**
+         * Create Request
+         * @description Asks a professional for documents and sends them the upload link.
+         */
+        post: operations["team_create_request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/document-requests/{request_id}/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resend Request */
+        post: operations["team_resend_request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/document-requests/{request_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Request */
+        post: operations["team_cancel_request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/requests/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * View Request
+         * @description What is asked, for which project, and what was uploaded so far.
+         */
+        get: operations["public_view_request"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/requests/{token}/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Upload */
+        post: operations["public_start_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/requests/{token}/uploads/{document_id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Complete Upload */
+        post: operations["public_complete_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/requests/{token}/done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Done
+         * @description The professional uploaded everything.
+         */
+        post: operations["public_done"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/settings": {
         parameters: {
             query?: never;
@@ -1155,6 +1326,11 @@ export interface components {
          */
         Channel: "email" | "portal" | "in_person";
         /**
+         * CheckVerdict
+         * @enum {string}
+         */
+        CheckVerdict: "ok" | "warning" | "problem" | "unchecked";
+        /**
          * ClientType
          * @enum {string}
          */
@@ -1214,6 +1390,16 @@ export interface components {
         ConfirmWhatsApp: {
             /** Code */
             code: string;
+        };
+        /** ContactIn */
+        ContactIn: {
+            role: components["schemas"]["AuthorityType"];
+            /** Name */
+            name: string;
+            /** Email */
+            email?: string | null;
+            /** Phone */
+            phone?: string | null;
         };
         /** ContactOut */
         ContactOut: {
@@ -1291,6 +1477,14 @@ export interface components {
             created_at: string;
             /** Uploaded By Name */
             uploaded_by_name: string | null;
+            check_status?: components["schemas"]["CheckVerdict"] | null;
+            /** Check Summary */
+            check_summary?: string | null;
+            /**
+             * Check Issues
+             * @default []
+             */
+            check_issues: string[];
             /** Download Url */
             download_url: string;
         };
@@ -1298,7 +1492,7 @@ export interface components {
          * DocumentSource
          * @enum {string}
          */
-        DocumentSource: "upload" | "email";
+        DocumentSource: "upload" | "email" | "professional";
         /**
          * DraftKind
          * @enum {string}
@@ -1369,6 +1563,22 @@ export interface components {
         FileDocument: {
             /** Requirement Id */
             requirement_id: string | null;
+        };
+        /** FileOut */
+        FileOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** File Name */
+            file_name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            check_status: components["schemas"]["CheckVerdict"] | null;
         };
         /** FileThread */
         FileThread: {
@@ -1511,7 +1721,7 @@ export interface components {
          * NotificationKind
          * @enum {string}
          */
-        NotificationKind: "approval_needed" | "authority_request" | "daily_digest" | "whatsapp_connected" | "import_finished" | "draft_ready" | "test";
+        NotificationKind: "approval_needed" | "authority_request" | "daily_digest" | "whatsapp_connected" | "import_finished" | "draft_ready" | "document_received" | "document_problem" | "test";
         /** NotificationList */
         NotificationList: {
             /** Unread */
@@ -1799,6 +2009,43 @@ export interface components {
          * @enum {string}
          */
         ProjectStatus: "active" | "completed" | "archived";
+        /** PublicRequestOut */
+        PublicRequestOut: {
+            /** Project Name */
+            project_name: string;
+            /** Place */
+            place: string;
+            /** Requested By */
+            requested_by: string;
+            /** Contact Name */
+            contact_name: string;
+            role: components["schemas"]["AuthorityType"];
+            /** Requirement Title */
+            requirement_title: string;
+            /** Documents */
+            documents: string[];
+            /** Note */
+            note: string | null;
+            status: components["schemas"]["RequestStatus"];
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Files */
+            files: components["schemas"]["FileOut"][];
+            /** Max Upload Mb */
+            max_upload_mb: number;
+        };
+        /** PublicUpload */
+        PublicUpload: {
+            /** File Name */
+            file_name: string;
+            /** Content Type */
+            content_type: string;
+            /** Size Bytes */
+            size_bytes: number;
+        };
         /** RefreshIn */
         RefreshIn: {
             /** Refresh Token */
@@ -1852,6 +2099,67 @@ export interface components {
             /** Pending */
             pending: number;
         };
+        /** RequestCreate */
+        RequestCreate: {
+            /**
+             * Requirement Id
+             * Format: uuid
+             */
+            requirement_id: string;
+            /** Contact Id */
+            contact_id?: string | null;
+            contact?: components["schemas"]["ContactIn"] | null;
+            /** Documents */
+            documents: string[];
+            /** Note */
+            note?: string | null;
+        };
+        /** RequestOut */
+        RequestOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Requirement Id
+             * Format: uuid
+             */
+            requirement_id: string;
+            /** Requirement Title */
+            requirement_title: string;
+            contact: components["schemas"]["TeamMemberOut"];
+            /** Documents */
+            documents: string[];
+            /** Note */
+            note: string | null;
+            status: components["schemas"]["RequestStatus"];
+            /** Link */
+            link: string;
+            /** Sent Count */
+            sent_count: number;
+            /** Last Sent At */
+            last_sent_at: string | null;
+            /** Fulfilled At */
+            fulfilled_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Files */
+            files: components["schemas"]["FileOut"][];
+            /**
+             * Sent By
+             * @default []
+             */
+            sent_by: string[];
+        };
+        /**
+         * RequestStatus
+         * @enum {string}
+         */
+        RequestStatus: "open" | "fulfilled" | "cancelled";
         /** RequirementList */
         RequirementList: {
             /** Stages */
@@ -1905,6 +2213,11 @@ export interface components {
             /** Document Count */
             document_count: number;
             origin: components["schemas"]["RequirementOrigin"];
+            /**
+             * Check Issues
+             * @default []
+             */
+            check_issues: string[];
         };
         /**
          * RequirementStatus
@@ -2103,6 +2416,21 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** TeamMemberOut */
+        TeamMemberOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            role: components["schemas"]["AuthorityType"];
+            /** Name */
+            name: string;
+            /** Email */
+            email: string | null;
+            /** Phone */
+            phone: string | null;
         };
         /** TemplateOut */
         TemplateOut: {
@@ -3805,6 +4133,393 @@ export interface operations {
             path: {
                 project_id: string;
                 draft_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    team_list_contacts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamMemberOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    team_add_contact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContactIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamMemberOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    team_update_contact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                contact_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContactIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamMemberOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    team_delete_contact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                contact_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    team_list_requests: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    team_create_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    team_resend_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    team_cancel_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_view_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRequestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_start_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublicUpload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadStarted"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_complete_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_done: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
             };
             cookie?: never;
         };

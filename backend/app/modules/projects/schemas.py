@@ -133,6 +133,8 @@ class RequirementOut(BaseModel):
     document_count: int
     # template, permit_condition (from the permit) or city_list (the authority's own list).
     origin: RequirementOrigin
+    # What Arba's document checks found ("⛔ file: issue"), most serious first.
+    check_issues: list[str] = []
 
 
 class RequirementList(BaseModel):

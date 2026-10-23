@@ -82,6 +82,8 @@ class AuthorityType(StrEnum):
 class DocumentSource(StrEnum):
     upload = "upload"
     email = "email"
+    # Uploaded by a professional through a request link, without an account.
+    professional = "professional"
 
 
 class DocumentStatus(StrEnum):
@@ -132,6 +134,10 @@ class NotificationKind(StrEnum):
     import_finished = "import_finished"
     # Arba wrote a request or reminder to an authority; it waits for the person's approval.
     draft_ready = "draft_ready"
+    # A professional uploaded what was asked of them.
+    document_received = "document_received"
+    # Arba's check found a problem in a document.
+    document_problem = "document_problem"
     # Sent from Settings to check that email and WhatsApp reach the person.
     test = "test"
 
@@ -219,3 +225,19 @@ class DraftStatus(StrEnum):
     draft = "draft"
     sent = "sent"
     discarded = "discarded"
+
+
+class CheckVerdict(StrEnum):
+    ok = "ok"
+    # Usable, but something should be looked at (e.g. no stamp visible).
+    warning = "warning"
+    # Wrong document, another project, unsigned, or expired.
+    problem = "problem"
+    # Couldn't be checked (a drawing file, an unreadable scan).
+    unchecked = "unchecked"
+
+
+class RequestStatus(StrEnum):
+    open = "open"
+    fulfilled = "fulfilled"
+    cancelled = "cancelled"

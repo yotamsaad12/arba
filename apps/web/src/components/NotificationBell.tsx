@@ -13,6 +13,8 @@ const KIND_ICON: Record<NotificationItem["kind"], string> = {
   whatsapp_connected: "💬",
   import_finished: "🗂️",
   draft_ready: "✉️",
+  document_received: "📥",
+  document_problem: "⛔",
   test: "🧪",
 };
 

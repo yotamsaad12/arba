@@ -31,6 +31,9 @@ export type CatchUpReport = Schemas["CatchUpReport"];
 export type ReportItem = Schemas["ReportItem"];
 export type PermitCondition = Schemas["ConditionOut"];
 export type Draft = Schemas["DraftOut"];
+export type Contact = Schemas["TeamMemberOut"];
+export type DocumentRequestInfo = Schemas["RequestOut"];
+export type PublicRequest = Schemas["PublicRequestOut"];
 
 export interface ApiOptions {
   /** Empty for the web app, which reaches the API through the dev proxy / same origin. */

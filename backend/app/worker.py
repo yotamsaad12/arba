@@ -9,10 +9,13 @@ import asyncio
 import logging
 from datetime import UTC, datetime, timedelta
 
+from app.core.storage import get_storage
 from app.db.session import SessionLocal
+from app.modules.checks.service import check_pending
 from app.modules.notifications.digest import build_digests
 from app.modules.notifications.service import BATCH_SIZE, deliver_due
 from app.modules.outreach.service import prepare_reminders, prepare_requests
+from app.modules.team.service import remind_open
 
 log = logging.getLogger(__name__)
 INTERVAL_SECONDS = 10
@@ -31,6 +34,8 @@ async def tick(now: datetime | None = None) -> None:
         async with SessionLocal() as db:
             await prepare_requests(db)
             await prepare_reminders(db, now)
+            await check_pending(db, get_storage())
+            await remind_open(db, now)
     async with SessionLocal() as db:
         while await deliver_due(db, now) == BATCH_SIZE:  # a full batch: there may be more
             pass

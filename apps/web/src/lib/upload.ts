@@ -38,7 +38,7 @@ export async function uploadFile(
 }
 
 // XMLHttpRequest rather than fetch: fetch can't report upload progress.
-function put(
+export function put(
   target: { url: string; method: string; headers: Record<string, string> },
   file: File,
   onProgress: (fraction: number) => void,

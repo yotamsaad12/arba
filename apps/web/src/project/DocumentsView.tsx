@@ -188,6 +188,7 @@ function DocumentRow({
           {d.uploaded_by_name && <span>· {d.uploaded_by_name}</span>}
           <span>· {formatDateTime(d.created_at)}</span>
         </div>
+        {d.requirement_id && <CheckLine status={d.check_status ?? null} summary={d.check_summary ?? null} issues={d.check_issues ?? []} />}
         {(file.error || remove.error) && (
           <div className="mt-1 text-xs text-danger">{message(file.error ?? remove.error)}</div>
         )}
@@ -337,6 +338,38 @@ function ExportButton({ projectId, projectName, disabled }: { projectId: string;
         🗂️ {busy ? t("documents.exporting") : t("documents.downloadAll")}
       </Button>
       {error && <span className="text-xs text-danger">{error}</span>}
+    </div>
+  );
+}
+
+
+const CHECK_STYLE = {
+  ok: "bg-success-soft text-success",
+  warning: "bg-warning-soft text-warning",
+  problem: "bg-danger-soft text-danger",
+  unchecked: "bg-muted-soft text-muted",
+} as const;
+
+/** Arba's check of a filed document: verdict, and what's wrong when something is. */
+function CheckLine({
+  status,
+  summary,
+  issues,
+}: {
+  status: keyof typeof CHECK_STYLE | null;
+  summary: string | null;
+  issues: string[];
+}) {
+  const { t } = useTranslation();
+  if (status === null) {
+    return <div className="mt-1 animate-pulse text-xs text-ink-soft">🔍 {t("checks.pending")}</div>;
+  }
+  return (
+    <div className={cx("mt-1 rounded-lg px-2 py-1 text-xs", CHECK_STYLE[status])}>
+      <span className="font-bold">🔍 {t(`checks.${status}`)}</span>
+      {(issues.length ? issues : summary ? [summary] : []).map((line) => (
+        <span key={line}> · {line}</span>
+      ))}
     </div>
   );
 }

@@ -1,10 +1,11 @@
 import uuid
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, BackgroundTasks, status
 
 from app.core.deps import DB, CurrentUser
 from app.core.enums import ProjectRole
 from app.core.storage import get_storage
+from app.modules.checks.service import check_in_background
 from app.modules.inbox import service
 from app.modules.inbox.schemas import FileThread, ThreadDetail, ThreadSummary
 from app.modules.projects.service import get_project_for_user
@@ -34,9 +35,15 @@ async def mark_read(project_id: uuid.UUID, thread_id: uuid.UUID, db: DB, user: C
 
 @router.patch("/threads/{thread_id}")
 async def file_thread(
-    project_id: uuid.UUID, thread_id: uuid.UUID, data: FileThread, db: DB, user: CurrentUser
+    project_id: uuid.UUID,
+    thread_id: uuid.UUID,
+    data: FileThread,
+    db: DB,
+    user: CurrentUser,
+    background: BackgroundTasks,
 ) -> ThreadDetail:
     """Files the conversation (and its attachments) under a requirement, or unfiles it."""
     project, _ = await get_project_for_user(db, project_id, user, ProjectRole.manager)
     await service.file_thread(db, project, user, thread_id, data.requirement_id)
+    background.add_task(check_in_background, project.id, get_storage())
     return await service.thread_detail(db, get_storage(), project, thread_id)

@@ -1,7 +1,7 @@
 import type { Requirement } from "@arba/api-client";
 import { STATUS_TONE, statusActions, type ManualStatus, type RequirementStatus } from "@arba/shared";
-import { motion } from "motion/react";
-import { useRef, type MouseEvent } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { useRef, useState, type MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useCelebrate } from "../components/Celebrations";
 import { Alert, Badge, Button, cx } from "../components/ui";
@@ -9,6 +9,7 @@ import { $api, invalidateProjects } from "../lib/api";
 import { UPLOAD_ACCEPT } from "../lib/upload";
 import { useErrorMessage } from "../lib/useErrorMessage";
 import { UploadProgress } from "./DocumentsView";
+import { RequestForm, isProfessional } from "./TeamPanel";
 import { useUploads } from "./useUploads";
 
 // The approving bodies Arba writes to (mirrors WRITES_TO in backend/app/modules/outreach).
@@ -53,6 +54,9 @@ export function RequirementCard({
     },
   });
   const canWrite = canEdit && WRITES_TO.has(r.authority_type) && !["done", "not_applicable"].includes(r.status);
+
+  const [asking, setAsking] = useState(false);
+  const canAsk = canEdit && isProfessional(r.authority_type) && !["done", "not_applicable"].includes(r.status);
 
   const uploads = useUploads(projectId);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -148,6 +152,15 @@ export function RequirementCard({
         </div>
       )}
 
+      {r.check_issues.length > 0 && (
+        <div className="space-y-1 rounded-xl bg-danger-soft p-2.5 text-sm">
+          <div className="font-medium">🔍 {t("checks.issuesTitle")}</div>
+          {r.check_issues.map((issue) => (
+            <div key={issue}>{issue}</div>
+          ))}
+        </div>
+      )}
+
       {update.error && <Alert>{message(update.error)}</Alert>}
       {write.error && <Alert>{message(write.error)}</Alert>}
       <UploadProgress items={uploads.items} />
@@ -176,6 +189,11 @@ export function RequirementCard({
               >
                 📎 {t("documents.attach")}
               </Button>
+              {canAsk && !asking && (
+                <Button size="sm" variant="ghost" onClick={() => setAsking(true)}>
+                  📨 {t("requests.ask", { role: t(`authority.${r.authority_type}`) })}
+                </Button>
+              )}
               {canWrite && (
                 <Button
                   size="sm"
@@ -206,6 +224,9 @@ export function RequirementCard({
           )}
         </div>
       )}
+      <AnimatePresence>
+        {asking && <RequestForm projectId={projectId} requirement={r} onClose={() => setAsking(false)} />}
+      </AnimatePresence>
     </motion.article>
   );
 }

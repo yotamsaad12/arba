@@ -184,7 +184,9 @@ async def file_thread(
             Document.source == DocumentSource.email,
             movable,
         )
-        .values(requirement_id=requirement_id)
+        .values(
+            requirement_id=requirement_id, check_status=None, check_result=None, checked_at=None
+        )
     )
     await resolve_pending(db, user, requirement_id, thread_id=thread.id)
     await learn_from_thread(db, project, thread, requirement_id)

@@ -5,11 +5,11 @@ import uuid
 import zipfile
 from pathlib import PurePath
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.enums import DocumentSource, DocumentStatus
+from app.core.enums import CheckVerdict, DocumentSource, DocumentStatus
 from app.core.errors import AppError, not_found
 from app.core.storage import Storage
 from app.db.models import AuditLog, Document, Project, Requirement, User
@@ -119,6 +119,9 @@ async def file_document(
 ) -> Document:
     document = await get_document(db, project, document_id)
     await ensure_requirement(db, project, requirement_id)
+    if document.requirement_id != requirement_id:
+        # Checked against the step it is filed under: a new step means a new check.
+        document.check_status = document.check_result = document.checked_at = None
     document.requirement_id = requirement_id
     await resolve_pending(db, user, requirement_id, document_id=document.id)
     db.add(_audit(project, user, "document.filed", document, requirement=requirement_id))
@@ -163,6 +166,32 @@ async def document_counts(db: AsyncSession, project_id: uuid.UUID) -> dict[uuid.
     return {rid: n for rid, n in rows}
 
 
+async def document_issues(db: AsyncSession, project_id: uuid.UUID) -> dict[uuid.UUID, list[str]]:
+    """Per step, what Arba's checks found wrong in its documents ("file: issue")."""
+    rows = await db.execute(
+        select(
+            Document.requirement_id,
+            Document.file_name,
+            Document.check_status,
+            Document.check_result,
+        )
+        .where(
+            Document.project_id == project_id,
+            Document.status == DocumentStatus.ready,
+            Document.check_status.in_([CheckVerdict.problem, CheckVerdict.warning]),
+        )
+        # Problems before warnings.
+        .order_by(case((Document.check_status == CheckVerdict.problem, 0), else_=1))
+        .order_by(Document.created_at)
+    )
+    issues: dict[uuid.UUID, list[str]] = {}
+    for requirement_id, name, verdict, result in rows:
+        found = (result or {}).get("issues") or [(result or {}).get("summary", "")]
+        icon = "⛔" if verdict == CheckVerdict.problem else "⚠️"
+        issues.setdefault(requirement_id, []).extend(f"{icon} {name}: {i}" for i in found if i)
+    return {rid: lines[:4] for rid, lines in issues.items()}
+
+
 def to_out(
     storage: Storage, document: Document, uploaded_by_name: str | None = None
 ) -> DocumentOut:
@@ -175,7 +204,10 @@ def to_out(
         requirement_id=document.requirement_id,
         message_id=document.message_id,
         created_at=document.created_at,
-        uploaded_by_name=uploaded_by_name,
+        uploaded_by_name=uploaded_by_name or document.uploader_name,
+        check_status=document.check_status,
+        check_summary=(document.check_result or {}).get("summary"),
+        check_issues=(document.check_result or {}).get("issues") or [],
         download_url=storage.presign_download(
             document.storage_key, document.file_name, document.content_type
         ),

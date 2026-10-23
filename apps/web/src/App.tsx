@@ -10,6 +10,7 @@ import { NewProjectPage } from "./pages/NewProject";
 import { ProjectPage } from "./pages/Project";
 import { ProjectsPage } from "./pages/Projects";
 import { RegisterPage } from "./pages/Register";
+import { RequestUploadPage } from "./pages/RequestUpload";
 import { SettingsPage } from "./pages/Settings";
 import { WhatsAppSimulatorPage } from "./pages/WhatsAppSimulator";
 
@@ -26,6 +27,7 @@ export function App() {
           <Route index element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/r/:token" element={<RequestUploadPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       ) : (
@@ -36,6 +38,7 @@ export function App() {
             <Route path="/projects/:projectId" element={<ProjectPage />} />
             <Route path="/projects/:projectId/import" element={<ImportPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/r/:token" element={<RequestUploadPage />} />
             <Route path="/dev/whatsapp" element={<WhatsAppSimulatorPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

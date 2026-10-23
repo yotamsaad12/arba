@@ -100,6 +100,10 @@ async def _button(db: AsyncSession, user: User, payload: str) -> str:
         return "✔️ זה כבר טופל, אין צורך לעשות כלום."
 
     result = await suggestions.accept(db, project, user, suggestion.id, AcceptSuggestion())
+    from app.core.storage import get_storage
+    from app.modules.checks.service import check_pending
+
+    await check_pending(db, get_storage(), project.id)
     requirement = await db.get(Requirement, result.requirement_id)
     title = requirement.title if requirement else ""
     if result.status_applied:

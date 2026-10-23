@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.enums import (
     AuthorityType,
     Channel,
+    CheckVerdict,
     ClientType,
     ConditionStatus,
     ConditionTiming,
@@ -30,6 +31,7 @@ from app.core.enums import (
     ProjectRole,
     ProjectStatus,
     Repeat,
+    RequestStatus,
     RequirementOrigin,
     RequirementStatus,
     ScanStatus,
@@ -393,6 +395,15 @@ class Document(IdMixin, TimestampMixin, Base):
     source: Mapped[DocumentSource]
     status: Mapped[DocumentStatus] = mapped_column(default=DocumentStatus.pending)
     uploaded_by: Mapped[uuid.UUID | None] = mapped_column(sa.ForeignKey("users.id"))
+    # Uploaded through a professional's request link: the request, and who they are.
+    request_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("document_requests.id", ondelete="SET NULL")
+    )
+    uploader_name: Mapped[str | None] = mapped_column(sa.String(200))
+    # Arba's check of the document once it is filed under a step (see modules/checks).
+    check_status: Mapped[CheckVerdict | None]
+    check_result: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    checked_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
 
 
 class Thread(IdMixin, TimestampMixin, Base):
@@ -761,3 +772,47 @@ class AppMeta(Base):
 
     key: Mapped[str] = mapped_column(sa.String(64), primary_key=True)
     value: Mapped[str] = mapped_column(sa.Text)
+
+
+# --- The project team -----------------------------------------------------------------
+
+
+class ProjectContact(IdMixin, TimestampMixin, Base):
+    """A professional working on the project: surveyor, engineer, lab, contractor…"""
+
+    __tablename__ = "project_contacts"
+
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
+    role: Mapped[AuthorityType]
+    name: Mapped[str] = mapped_column(sa.String(200))
+    email: Mapped[str | None] = mapped_column(sa.String(320))
+    phone: Mapped[str | None] = mapped_column(sa.String(20))
+
+
+class DocumentRequest(IdMixin, TimestampMixin, Base):
+    """Documents asked of a professional, who uploads them through a personal link without an
+    account. The token is kept so the person can copy or resend the link; it grants only
+    uploading to this request and seeing what it asks for."""
+
+    __tablename__ = "document_requests"
+
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
+    requirement_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("requirements.id", ondelete="CASCADE"), index=True
+    )
+    contact_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("project_contacts.id", ondelete="CASCADE")
+    )
+    token: Mapped[str] = mapped_column(sa.String(64), unique=True)
+    documents: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    note: Mapped[str | None] = mapped_column(sa.Text)
+    status: Mapped[RequestStatus] = mapped_column(default=RequestStatus.open, index=True)
+    expires_at: Mapped[datetime] = mapped_column(sa.DateTime(timezone=True))
+    requested_by: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey("users.id"))
+    sent_count: Mapped[int] = mapped_column(default=0)
+    last_sent_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+    fulfilled_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))

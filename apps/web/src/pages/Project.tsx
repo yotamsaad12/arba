@@ -14,6 +14,7 @@ import { InboxView } from "../project/InboxView";
 import { AuthoritiesPanel, PermitBanner } from "../project/PermitPanel";
 import { ConditionsCard } from "../project/ConditionsCard";
 import { DraftsPanel } from "../project/DraftsPanel";
+import { RequestsPanel, TeamPanel } from "../project/TeamPanel";
 import { RequirementCard } from "../project/RequirementCard";
 import { ApprovalsPanel } from "../project/SuggestionCard";
 import { STAGE_ICON, isStageKey, sceneModel } from "../scene/model";
@@ -140,11 +141,13 @@ export function ProjectPage() {
                 />
               )}
               <DraftsPanel projectId={projectId} canEdit={canEdit} />
+              <RequestsPanel projectId={projectId} canEdit={canEdit} />
               {steps.data ? (
                 <NextStepsView projectId={projectId} steps={steps.data} titles={titles} canEdit={canEdit} />
               ) : (
                 <Spinner label={t("app.loading")} />
               )}
+              <TeamPanel projectId={projectId} canEdit={canEdit} />
               <AuthoritiesPanel projectId={projectId} />
             </div>
           )}
