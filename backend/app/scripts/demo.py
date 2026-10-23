@@ -1,4 +1,4 @@
-"""Resets the demo account to a rich, consistent project for showing Arba to customers.
+"""Resets the demo accounts to rich, consistent projects for showing Arba to customers.
 
     python -m app.scripts.demo [--password PASSWORD] [--remove-email EMAIL ...]
 
@@ -9,12 +9,18 @@ answered through an upload link, a document Arba flagged, mail waiting for appro
 letter to the water corporation. Everything goes through Arba's own services, so the data is
 what the app itself would produce. Safe to run again before every demo.
 
+A second account, for construction companies, gets "Nahal Park, plot 212" in Beer Sheva: two
+residential buildings, 48 units, deep in the Form 4 file. Its Home Front Command file is half
+in, a lab report for the wrong plot is flagged, its fire file is under way, and the
+municipality's own list (an Excel sheet) waits for the person to approve where each item goes.
+
 Point it at the target database with ARBA_DATABASE_URL and run it with
 ARBA_STORAGE_BACKEND=database for a serverless deployment.
 """
 
 import argparse
 import asyncio
+import io
 import secrets
 import uuid
 from datetime import UTC, date, datetime, timedelta
@@ -22,14 +28,19 @@ from email.message import EmailMessage
 from email.utils import format_datetime
 from pathlib import Path
 
+import openpyxl
 from sqlalchemy import delete, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import (
     AuthorityType,
+    ClientType,
     ConditionTiming,
     DocumentSource,
     DocumentStatus,
+    Form4Track,
+    OrgRole,
+    ProjectFeature,
     RequestStatus,
 )
 from app.core.enums import RequirementStatus as S
@@ -56,16 +67,20 @@ from app.modules.checks.service import check_pending
 from app.modules.outreach.service import create_draft
 from app.modules.permits import conditions_service
 from app.modules.permits.service import confirm_with_committee, run_checks
-from app.modules.projects.schemas import ProjectCreate
+from app.modules.projects.schemas import ProjectCreate, RequirementCreate
 from app.modules.projects.service import create_project
+from app.modules.requirements import list_import
+from app.modules.requirements.checklist import create_item
 from app.modules.requirements.service import change_status
 from app.modules.suggestions.service import RulesClassifier, suggest_for_message
 from app.modules.team.schemas import ContactIn, RequestCreate
 from app.modules.team.service import add_contact, create_request
 
 DEMO_EMAIL = "demo@example.com"
+DEVELOPER_EMAIL = "developer@example.com"
 FILES = Path(__file__).parent / "demo_files"
 RAANANA = 8700
+BEER_SHEVA = 9000
 
 
 # --- Clearing -------------------------------------------------------------------------
@@ -105,7 +120,11 @@ async def _remove_account(db: AsyncSession, user: User) -> None:
 
 
 async def _step(
-    db: AsyncSession, project: Project, key: str, floor: int | None = None
+    db: AsyncSession,
+    project: Project,
+    key: str,
+    floor: int | None = None,
+    building: int | None = None,
 ) -> Requirement:
     query = (
         select(Requirement)
@@ -114,6 +133,8 @@ async def _step(
     )
     if floor is not None:
         query = query.where(Requirement.floor == floor)
+    if building is not None:
+        query = query.where(Requirement.building == building)
     step = await db.scalar(query.limit(1))
     assert step is not None, key
     return step
@@ -410,6 +431,231 @@ async def build(db: AsyncSession, user: User) -> Project:
     return project
 
 
+async def _set(
+    db: AsyncSession, project: Project, user: User, key: str, status: S, building: int | None = None
+) -> None:
+    step = await _step(db, project, key, building=building)
+    await change_status(db, project, step.id, status, user)
+
+
+def _municipality_list() -> bytes:
+    """The municipality's Form 4 list as such lists come: a sheet with a status column."""
+    book = openpyxl.Workbook()
+    sheet = book.active
+    assert sheet is not None
+    sheet.title = "עירייה"
+    sheet.append(["רשימת אישורים לטופס 4 - פארק הנחל, מגרש 212"])
+    sheet.append(["מס'", "הבדיקה", "סטטוס"])
+    for row in (
+        (1, "תכנית עדות - מודד מוסמך", "נספח 20"),
+        (2, "אישור חשמלאי מוסמך", "נספח 33"),
+        (3, "אישור תאורת התמצאות", "נספח 41"),
+        (4, "חישובי שטחים", "נספח 12"),
+        (5, "אישור מחלקת גנים ונוף", "לתאם סיור עם המחלקה"),
+        (6, "אישור מחלקת תברואה לחדרי אשפה", "נספח 37"),
+        (7, "שילוט מספרי בניינים ודירות", ""),
+        (8, "אישור yes", "אין צורך"),
+    ):
+        sheet.append(list(row))
+    out = io.BytesIO()
+    book.save(out)
+    return out.getvalue()
+
+
+async def build_developer(db: AsyncSession, user: User) -> Project:
+    storage = get_storage()
+    now = datetime.now(UTC)
+    dev = "developer/"
+    template_id = await db.scalar(
+        text(
+            "SELECT id FROM templates WHERE key = 'residential_building' "
+            "ORDER BY version DESC LIMIT 1"
+        )
+    )
+    project = await create_project(
+        db,
+        user,
+        ProjectCreate(
+            name="פארק הנחל - מגרש 212",
+            template_id=template_id,
+            locality_code=BEER_SHEVA,
+            address="שדרות הנחל 40, באר שבע",
+            floors=9,
+            gush="38021",
+            helka="15",
+            plot_number="212",
+            buildings=2,
+            units=48,
+            features=[
+                ProjectFeature.basement,
+                ProjectFeature.elevator,
+                ProjectFeature.gas,
+                ProjectFeature.parking,
+                ProjectFeature.sprinklers,
+            ],
+            permit_number="20240877",
+            permit_request_number="2023115566",
+            permit_issue_date=date(2025, 4, 2),
+            permit_committee="הוועדה המקומית לתכנון ובנייה באר שבע",
+        ),
+    )
+    await _file(
+        db,
+        project,
+        await _step(db, project, "permit"),
+        "היתר בנייה 20240877.pdf",
+        dev + "permit.pdf",
+        by=user,
+    )
+    await run_checks(db, project, user)
+
+    # The frame is up in both buildings; the Home Front Command file is being collected.
+    await catch_up(db, project, user, "mamad")
+    # Catch-up leaves items that hang on a feature; the basement is long finished.
+    for building in (1, 2):
+        await _set(db, project, user, "concrete_basement", S.done, building=building)
+    await _set(db, project, user, "radon", S.done)
+    await _file(
+        db,
+        project,
+        await _step(db, project, "concrete_foundations", building=1),
+        "תעודות בטון - יסודות - בניין 1.pdf",
+        dev + "concrete.pdf",
+        by=user,
+        when=now - timedelta(days=120),
+    )
+    for key in ("hfc_order", "hfc_structure", "hfc_concrete", "hfc_door_window", "hfc_sealing"):
+        await _set(db, project, user, key, S.done, building=1)
+    await _set(db, project, user, "hfc_plan_page", S.done)
+    for key in ("hfc_order", "hfc_structure", "hfc_concrete"):
+        await _set(db, project, user, key, S.done, building=2)
+    for key in ("hfc_door_window", "hfc_ventilation"):
+        await _set(db, project, user, key, S.in_progress, building=2)
+
+    # The lab sent building 2's sealing test, but for another plot: Arba flags it.
+    lab = await add_contact(
+        db,
+        project,
+        ContactIn(
+            role=AuthorityType.testing_lab,
+            name="מעבדת הנגב לבדיקות בנייה",
+            email="lab-negev@example.co.il",
+            phone="08-6231234",
+        ),
+    )
+    await add_contact(
+        db,
+        project,
+        ContactIn(
+            role=AuthorityType.supervising_engineer,
+            name="אינג' שירה בן דוד - פיקוח",
+            email="shira@example.co.il",
+        ),
+    )
+    await add_contact(
+        db,
+        project,
+        ContactIn(
+            role=AuthorityType.surveyor, name="מדידות הדרום", email="survey-south@example.co.il"
+        ),
+    )
+    sealing = await _step(db, project, "hfc_sealing", building=2)
+    asked, _ = await create_request(
+        db,
+        project,
+        user,
+        RequestCreate(
+            requirement_id=sealing.id,
+            contact_id=lab.id,
+            documents=['דוח בדיקת אטימות ממ"דים'],
+            note="בניין 2, כל הדירות",
+        ),
+    )
+    await _file(
+        db,
+        project,
+        sealing,
+        "בדיקת אטימות - בניין 2.pdf",
+        dev + "sealing_wrong.pdf",
+        uploader=lab.name,
+        request=asked,
+    )
+    asked.status, asked.fulfilled_at = RequestStatus.fulfilled, now - timedelta(hours=2)
+
+    # The fire file: fire doors approved, detection and sprinklers with the lab.
+    fire_doors = await _step(db, project, "fire_doors")
+    await _file(
+        db,
+        project,
+        fire_doors,
+        "אישור דלתות אש.pdf",
+        dev + "fire_doors.pdf",
+        uploader=lab.name,
+        when=now - timedelta(days=6),
+    )
+    await change_status(db, project, fire_doors.id, S.done, user)
+    for key in ("fire_detection", "fire_sprinklers", "fire_hose_design"):
+        await _set(db, project, user, key, S.in_progress)
+    await _set(db, project, user, "fire_gas_location", S.waiting_for_authority)
+    for key in ("sanitary", "elevators", "electrical_engineer", "water_disinfection"):
+        await _set(db, project, user, key, S.in_progress)
+    await _set(db, project, user, "hot", S.not_applicable)
+
+    # Something only this municipality asks for, added by the team, with a deadline.
+    garden = await create_item(
+        db,
+        project,
+        user,
+        RequirementCreate(
+            title="אישור אגרונום העירייה לשתילת עצים ברחוב",
+            track=Form4Track.municipality,
+            appendix="נספח 27",
+            notes="סיור נקבע עם האגרונום",
+            due_date=(now + timedelta(days=12)).date(),
+        ),
+    )
+    await change_status(db, project, garden.id, S.in_progress, user)
+    await db.commit()
+
+    while await check_pending(db, storage, project.id):
+        pass
+
+    # The municipality's own list arrived; Arba has read it and waits for approval.
+    await list_import.start_import(
+        db,
+        storage,
+        project,
+        user,
+        file_name="רשימת דרישות לטופס 4 - עיריית באר שבע.xlsx",
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        data=_municipality_list(),
+    )
+    return project
+
+
+async def _developer_account(db: AsyncSession, password: str) -> User:
+    user = await db.scalar(select(User).where(User.email == DEVELOPER_EMAIL))
+    if user is None:
+        user = User(id=uuid.uuid4(), email=DEVELOPER_EMAIL, name="", password_hash="")
+        org = Organization(id=uuid.uuid4(), name="", type=ClientType.business)
+        db.add_all([user, org])
+        await db.flush()
+        db.add(Membership(user_id=user.id, organization_id=org.id, role=OrgRole.owner))
+    else:
+        await _delete_projects(db, await _owned_projects(db, user))
+        org = await db.scalar(
+            select(Organization)
+            .join(Membership, Membership.organization_id == Organization.id)
+            .where(Membership.user_id == user.id)
+        )
+        assert org is not None
+    user.name = "רוני אברהם"
+    user.password_hash = hash_password(password)
+    org.name, org.type = 'אופק יזמות ובנייה בע"מ', ClientType.business
+    await db.commit()
+    return user
+
+
 async def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--password", help="new password for the demo account (default: generated)")
@@ -434,6 +680,11 @@ async def main() -> None:
         project = await build(db, user)
         print(f"demo project: {project.name} ({project.id})")
         print(f"login: {DEMO_EMAIL} / {password}")
+
+        developer = await _developer_account(db, password)
+        project = await build_developer(db, developer)
+        print(f"developer project: {project.name} ({project.id})")
+        print(f"login: {DEVELOPER_EMAIL} / {password}")
     await engine.dispose()
 
 
